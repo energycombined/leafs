@@ -80,12 +80,14 @@ def transform_data_cellpy(file_name):
         
         c = d.cell
         df_raw= c.raw
+        #multiple with 1000 for mA and mAh
+        df_raw[["current","charge_capacity","discharge_capacity","charge_energy","discharge_energy"]]=df_raw[["current","charge_capacity","discharge_capacity","charge_energy","discharge_energy"]]*1000
 
         df_sum = c.summary
         df_sum['cycle_index']=df_sum.index
         df_sum2 = df_sum[['cycle_index','data_point', 'test_time', 'date_time', 'end_voltage_charge_u_V','end_voltage_discharge_u_V', 'charge_capacity', 'discharge_capacity','discharge_capacity_u_mAh_g', 'charge_capacity_u_mAh_g','cumulated_discharge_capacity_u_mAh_g','cumulated_charge_capacity_u_mAh_g', 'coulombic_efficiency_u_percentage', 'coulombic_difference_u_mAh_g','cumulated_coulombic_efficiency_u_percentage','cumulated_coulombic_difference_u_mAh_g','discharge_capacity_loss_u_mAh_g','cumulated_discharge_capacity_loss_u_mAh_g','charge_capacity_loss_u_mAh_g','cumulated_charge_capacity_loss_u_mAh_g', 'low_level_u_percentage','high_level_u_percentage', 'cumulated_ric_u_none','cumulated_ric_sei_u_none', 'cumulated_ric_disconnect_u_none','shifted_charge_capacity_u_mAh_g', 'shifted_discharge_capacity_u_mAh_g','normalized_cycle_index', 'charge_c_rate', 'discharge_c_rate']]
 
-        out_summary = json.loads(df_sum.to_json(orient='split')) # change  df_sum_small when you want to see the structure
+        out_summary = json.loads(df_sum2.to_json(orient='split')) # change  df_sum_small when you want to see the structure
         out_raw = json.loads(df_raw.to_json(orient='split')) # change  df_raw_small when you want to see the structure
 
         # the json structure, four arrays in 1 json object. 
@@ -137,7 +139,7 @@ def insert_value(json_value):
         return False
 
 
-functions = {'RES':transform_data_cellpy, 'MPR': transform_data_galvani,'TXT':transform_data_xrd}
+functions = {'cellpy':transform_data_cellpy, 'galvani': transform_data_galvani,'xrd_custom':transform_data_xrd}
 
 if __name__ == "__main__":
     print(transform_data_galvani(r"./uploads/example_cv.mpr"))

@@ -30,11 +30,11 @@ def allowed_test(extension, test_type, instrument):
     instrument_index = accepted_instruments.index(instrument)
     if test_index in accepted_combinations[file_index].keys():
         if instrument_index in accepted_combinations[file_index][test_index]:
-            return (True, "")
+            return (True, "", accepted_combinations[file_index][test_index][instrument_index])
         else:
-            return (False, f"{instrument} {test_type} tests are not supported in {extension} files")
+            return (False, f"{instrument} {test_type} tests are not supported in {extension} files","")
     else:
-        return (False, f"{test_type} test is not supported in {extension} files.")
+        return (False, f"{test_type} test is not supported in {extension} files.","")
 
 @app.errorhandler(404)
 def page_not_found(error):
@@ -84,19 +84,22 @@ def upload_file():
         if filename == '':
             return {'Code':1, 'Message': "File has no name"}
         if file:
-            allowed, message = allowed_test(extension, test_type.upper(), instrument.upper())
+            allowed, message, data_converter = allowed_test(extension, test_type.upper(), instrument.upper())
             if allowed:
                 new_file_name = ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(25)) + "." + extension.lower()
                 location  = os.path.join(os.path.join(app.config['UPLOAD_FOLDER'], new_file_name))
                 print(location)
                 with open(location , 'wb') as f_out:
                     f_out.write(file)   
-                success, data = functions[extension]('uploads/' + new_file_name)
+                success, data = functions[data_converter]('uploads/' + new_file_name)
+                #print(f'{extension}: {test_type.upper()} :{instrument.upper}')
                 if success:
                     if len(files) > 1:
                         #message={'Code':0, 'Message':f"Transformed successfully. Only the first file ({filename}) was transformed, multiple file transformation is not yet supported."}
-                        return {'experiment_info': data['experiment_info'], 'experiment_summary': data['experiment_summary'], 'experiment_data': data['experiment_data']} 
-                    return {'experiment_info': data['experiment_info'], 'experiment_summary': data['experiment_summary'],'experiment_data': data['experiment_data']}
+                        #return {'experiment_info': data['experiment_info'], 'experiment_summary': data['experiment_summary'], 'experiment_data': data['experiment_data']} 
+                        return data
+                    #return {'experiment_info': data['experiment_info'], 'experiment_summary': data['experiment_summary'],'experiment_data': data['experiment_data']}
+                    return data
 
                 else:
                     return{'Code':1, 'Message': "Unknown Error while transforming file."}
