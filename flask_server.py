@@ -20,11 +20,11 @@ def check_gzip(filename):
 
 def allowed_test(extension, test_type, instrument):
     if extension not in accepted_files: 
-        return (False, f"{extension} extension not yet supported, currently we support the following files {accepted_files}")
+        return (False, f"{extension} extension not yet supported, currently we support the following files {accepted_files}","")
     if test_type not in accepted_tests:
-        return (False, f"{test_type} test not yet supported, currently we support the following tests {accepted_tests}") 
+        return (False, f"{test_type} test not yet supported, currently we support the following tests {accepted_tests}","") 
     if instrument not in accepted_instruments:
-        return (False, f"{instrument} not yet supported, currently we support the following instruments {accepted_instruments}")
+        return (False, f"{instrument} not yet supported, currently we support the following instruments {accepted_instruments}","")
     file_index = accepted_files.index(extension)
     test_index = accepted_tests.index(test_type)
     instrument_index = accepted_instruments.index(instrument)
