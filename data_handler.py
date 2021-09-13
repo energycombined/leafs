@@ -142,5 +142,4 @@ def insert_value(json_value):
 functions = {'cellpy':transform_data_cellpy, 'galvani': transform_data_galvani,'xrd_custom':transform_data_xrd}
 
 if __name__ == "__main__":
-    print("hei")
-    #print(transform_data_galvani(r"./uploads/example_cv.mpr"))
+    print(transform_data_galvani(r"./uploads/example_cv.mpr"))
