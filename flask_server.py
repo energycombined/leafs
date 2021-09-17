@@ -3,7 +3,7 @@ from re import split
 from flask import Flask, flash, request, redirect, url_for, send_from_directory, jsonify
 from werkzeug.utils import secure_filename
 from data_handler import functions
-from TestSupport import accepted_files, accepted_combinations, accepted_instruments, accepted_tests
+from SupportedTests import accepted_files, accepted_combinations, accepted_instruments, accepted_tests
 import random
 import string
 import gzip
