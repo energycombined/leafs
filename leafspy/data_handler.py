@@ -85,6 +85,7 @@ def transform_data_cellpy(file_name):
 
         df_sum = c.summary
         df_sum['cycle_index']=df_sum.index
+        df_sum2[['charge_capacity','discharge_capacity']]=df_sum2[['charge_capacity','discharge_capacity']]*1000
         df_sum2 = df_sum[['cycle_index','data_point', 'test_time', 'date_time', 'end_voltage_charge_u_V','end_voltage_discharge_u_V', 'charge_capacity', 'discharge_capacity','discharge_capacity_u_mAh_g', 'charge_capacity_u_mAh_g','cumulated_discharge_capacity_u_mAh_g','cumulated_charge_capacity_u_mAh_g', 'coulombic_efficiency_u_percentage', 'coulombic_difference_u_mAh_g','cumulated_coulombic_efficiency_u_percentage','cumulated_coulombic_difference_u_mAh_g','discharge_capacity_loss_u_mAh_g','cumulated_discharge_capacity_loss_u_mAh_g','charge_capacity_loss_u_mAh_g','cumulated_charge_capacity_loss_u_mAh_g', 'low_level_u_percentage','high_level_u_percentage', 'cumulated_ric_u_none','cumulated_ric_sei_u_none', 'cumulated_ric_disconnect_u_none','shifted_charge_capacity_u_mAh_g', 'shifted_discharge_capacity_u_mAh_g','normalized_cycle_index', 'charge_c_rate', 'discharge_c_rate']]
 
         out_summary = json.loads(df_sum2.to_json(orient='split')) # change  df_sum_small when you want to see the structure
