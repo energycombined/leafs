@@ -1,4 +1,5 @@
 import os
+from pathlib import Path
 from re import split
 import random
 import string
@@ -17,9 +18,14 @@ app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
 
+def temporary_storage_path(extension):
+    new_file_name = ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(25)) + "." + extension.lower()
+    location = Path(os.path.join(os.path.join(app.config['UPLOAD_FOLDER'], new_file_name))).resolve()
+    return location
+
+
 def check_gzip(filename):
-    splitted = filename.split(".")
-    return len(splitted) > 2 and splitted[2] =="gz"
+    return Path(filename).suffix == ".gz"
 
 
 def allowed_test(extension, test_type, instrument):
@@ -48,10 +54,7 @@ def page_not_found(error):
 
 @app.route('/upload_file', methods=['GET', 'POST'])
 def upload_file():
-
-    # this is the default generated html/page created
-    # TODO: add fields for brand, instrument, test_type
-
+    # This method should probably only handle POST requests
     out = '''
     <!doctype html>
     <title>Upload new File</title>
@@ -89,36 +92,40 @@ def upload_file():
         #else: 
         #    test_type= test_type + "-" + test_subtype
         files = request.files.getlist('files')
+
         if len(files) == 0:
             return {'Code':1, 'Message': "No file attached"}
 
         # If the user does not select a file, the browser submits an
         # empty file without a filename.
         file = files[0]
+
         if not check_gzip(file.filename):
             return {'Code':1 , 'Message': "Only gz files allowed"}
-        extension= file.filename.rsplit('.')[1].upper()
-        filename = secure_filename(file.filename.rsplit('.')[0])
+        extension = file.filename.rsplit('.', maxsplit=2)[-2].upper()
+        filename = secure_filename(file.filename.rsplit(".", maxsplit=2)[0])
+
         file = gzip.open(file, 'rb')
-        file = file.read() 
+        file = file.read()
+
         if filename == '':
             return {'Code':1, 'Message': "File has no name"}
         if file:
             allowed, message, data_converter = allowed_test(extension, test_type.upper(), instrument.upper())
             if allowed:
-                new_file_name = ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(25)) + "." + extension.lower()
-                location  = os.path.join(os.path.join(app.config['UPLOAD_FOLDER'], new_file_name))
-                print(location)
-                with open(location , 'wb') as f_out:
-                    f_out.write(file)   
-                success, data = functions[data_converter]('uploads/' + new_file_name)
-                #print(f'{extension}: {test_type.upper()} :{instrument.upper}')
+                location = temporary_storage_path(extension)
+
+                with open(location, 'wb') as f_out:
+                    f_out.write(file)
+
+                success, data = functions[data_converter](location)
+                # print(f'{extension}: {test_type.upper()} :{instrument.upper}')
                 if success:
                     if len(files) > 1:
-                        #message={'Code':0, 'Message':f"Transformed successfully. Only the first file ({filename}) was transformed, multiple file transformation is not yet supported."}
-                        #return {'experiment_info': data['experiment_info'], 'experiment_summary': data['experiment_summary'], 'experiment_data': data['experiment_data']} 
+                        # message={'Code':0, 'Message':f"Transformed successfully. Only the first file ({filename}) was transformed, multiple file transformation is not yet supported."}
+                        # return {'experiment_info': data['experiment_info'], 'experiment_summary': data['experiment_summary'], 'experiment_data': data['experiment_data']}
                         return data
-                    #return {'experiment_info': data['experiment_info'], 'experiment_summary': data['experiment_summary'],'experiment_data': data['experiment_data']}
+                    # return {'experiment_info': data['experiment_info'], 'experiment_summary': data['experiment_summary'],'experiment_data': data['experiment_data']}
                     return data
 
                 else:
