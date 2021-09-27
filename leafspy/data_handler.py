@@ -1,5 +1,6 @@
 from cellpy import cellreader
 from cellpy import prmreader
+from cellpy import log
 import json 
 import psycopg2
 from psycopg2 import Error
@@ -41,9 +42,8 @@ def transform_data_galvani(file_name):
         return (False, err)
 
 
-def transform_data_xrd(file_name):    
+def transform_data_xrd(file_name):
     try:
-        
         df =  pd.read_csv(file_name,
         sep = '\s+', 
         engine = 'python', 
@@ -71,12 +71,12 @@ def transform_data_xrd(file_name):
 
 
 def transform_data_cellpy(file_name):
+    # log.setup_logging(default_level="DEBUG")
     try:
         mass = 1
         d = cellreader.CellpyData()
         d.from_raw(file_name)
         d.make_summary()
-        print(d.check())
         
         c = d.cell
         df_raw= c.raw
