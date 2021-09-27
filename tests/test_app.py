@@ -51,7 +51,7 @@ def test_upload_file_post_no_file(client):
     assert response.status_code == 200
 
 
-def test_upload_arbin_file_post(client, tmp_path):
+def test_upload_file_post_arbin(client, tmp_path):
     arbin_test_file = "546_ES_Fe02CDvsNi_HalleMix_Repro.res"
     arbin_file_path = Path("../test_data") / arbin_test_file
     temp_gz_file_path = tmp_path / "arbin_test_file.res.gz"
