@@ -31,6 +31,13 @@ jobs:
         uses: actions/setup-python@v2
         with:
           python-version: "3.8"
+          
+      # Cache dependencies to speed up the action
+      - name: Cache
+        uses: actions/cache@v2
+        with:
+          path: ~/.cache/pip
+          key: ${{ hashFiles('setup.py') }}
 
       # Install action dependencies
       - name: Install mdbtools
