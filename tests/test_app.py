@@ -16,6 +16,11 @@ def client():
     return flask_server.app.test_client()
 
 
+import os
+def test_current():
+    print(os.getenv('PYTEST_CURRENT_TEST'))
+
+
 def test_import(client):
     pass
 

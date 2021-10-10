@@ -45,4 +45,4 @@ jobs:
       - name: Run pytest
         run: |
           echo Running pytest
-          pytest --verbose
+          pytest --verbose -s
