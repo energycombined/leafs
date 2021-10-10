@@ -17,6 +17,7 @@ included_packages = find_packages(exclude=["build", "docs", "templates"])
 requirements = [
     "flask",
     "cellpy",
+    "galvani",
     "werkzeug",
     "psycopg2"
 ]
