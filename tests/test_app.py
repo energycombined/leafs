@@ -9,16 +9,13 @@ from werkzeug.datastructures import FileStorage
 
 from leafspy import flask_server
 
+FIXTURE_DIR = Path(__file__).parents[1].resolve() / "test_data"
+
 
 @pytest.fixture
 def client():
     """Flask app client"""
     return flask_server.app.test_client()
-
-
-import os
-def test_current():
-    print(os.getenv('PYTEST_CURRENT_TEST'))
 
 
 def test_import(client):
@@ -59,13 +56,15 @@ def test_upload_file_post_no_file(client):
 
 def test_upload_file_post_arbin(client, tmp_path):
     arbin_test_file = "546_ES_Fe02CDvsNi_HalleMix_Repro.res"
-    arbin_file_path = Path("../test_data") / arbin_test_file
+    arbin_file_path = FIXTURE_DIR / arbin_test_file
     temp_gz_file_path = tmp_path / "arbin_test_file.res.gz"
     assert arbin_file_path.is_file()
 
     with open(arbin_file_path, "rb") as f_in:
         with gzip.open(temp_gz_file_path, "wb") as f_out:
             shutil.copyfileobj(f_in, f_out)
+
+    assert temp_gz_file_path.is_file()
 
     arbin_file = FileStorage(
         stream=open(temp_gz_file_path, "rb"),
@@ -83,6 +82,7 @@ def test_upload_file_post_arbin(client, tmp_path):
 
     response = client.post(url, data=data, content_type="multipart/form-data")
     payload = response.get_json()
+
     assert "experiment_data" in payload.keys()
     assert "experiment_info" in payload.keys()
     assert response.status_code == 200

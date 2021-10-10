@@ -34,10 +34,12 @@ def temporary_storage_path(extension):
         + "."
         + extension.lower()
     )
-    location = Path(
-        os.path.join(os.path.join(app.config["UPLOAD_FOLDER"], new_file_name))
-    ).resolve()
-    return location
+    upload_folder = Path(app.config["UPLOAD_FOLDER"]).resolve()
+    if not upload_folder.is_dir():
+        logging.debug("upload folder does not exist")
+        logging.debug("creating upload folder")
+        os.mkdir(upload_folder)
+    return upload_folder / new_file_name
 
 
 def check_gzip(filename):
@@ -157,7 +159,6 @@ def upload_file():
             )
             if allowed:
                 location = temporary_storage_path(extension)
-
                 with open(location, "wb") as f_out:
                     f_out.write(file)
 
