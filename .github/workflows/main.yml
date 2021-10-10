@@ -33,6 +33,11 @@ jobs:
           python-version: "3.8"
 
       # Install action dependencies
+      - name: Install mdbtools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y mdbtools
+        
       - name: Install pytest
         run: |
           python -m pip install --upgrade pip pytest
