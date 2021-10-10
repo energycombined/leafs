@@ -17,13 +17,11 @@ included_packages = find_packages(exclude=["build", "docs", "templates"])
 requirements = [
     "flask",
     "cellpy",
-    "werkzeug"
+    "werkzeug",
+    "psycopg2"
 ]
 
-test_requirements = [
-    "flask",
-    "cellpy",
-    "werkzeug"
+test_requirements = requirements + [
     "black",
     "pytest",
 ]
