@@ -1,3 +1,5 @@
+"""Currently supported tests and instruments."""
+
 accepted_files = ["MPR", "RES", "TXT"]
 accepted_tests = [
     "VOLTAMMETRY-CYCLIC VOLTAMMETRY (CV)",

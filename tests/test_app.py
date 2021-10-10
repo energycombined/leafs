@@ -1,12 +1,13 @@
+"""Tests for leafspy"""
+
+import gzip
 import shutil
 from pathlib import Path
-import os
-import gzip
 
 import pytest
-from leafspy import flask_server
-from flask import jsonify
 from werkzeug.datastructures import FileStorage
+
+from leafspy import flask_server
 
 
 @pytest.fixture

@@ -2,17 +2,16 @@
 
 import os
 from pathlib import Path
-from re import split
 import random
 import logging
 import string
 import gzip
 
-from flask import Flask, flash, request, redirect, url_for, send_from_directory, jsonify
+from flask import Flask, request, send_from_directory
 from werkzeug.utils import secure_filename
 
 from .data_handler import functions
-from .SupportedTests import (
+from .supported_experiments import (
     accepted_files,
     accepted_combinations,
     accepted_instruments,

@@ -1,7 +1,6 @@
+"""Data conversion routines"""
+
 from cellpy import cellreader
-from cellpy import prmreader
-from cellpy import log
-import json
 import psycopg2
 from psycopg2 import Error
 from galvani import BioLogic
@@ -11,13 +10,15 @@ import os
 
 
 def delete_file(file_name):
+    """Delete temporary file."""
     try:
         os.remove(file_name)
-    except:
+    except IOError:
         print("error while deleting file...")
 
 
 def transform_data_galvani(file_name):
+    """Use Galvani to convert BioLogic .mpr files"""
 
     try:
         mpr_file = BioLogic.MPRfile(rf"{file_name}")
@@ -39,12 +40,14 @@ def transform_data_galvani(file_name):
             "experiment_data": out_cv_biologicmpr,
         }
         delete_file(file_name)
-        return (True, xx)
+        return True, xx
     except Error as err:
-        return (False, err)
+        return False, err
 
 
 def transform_data_xrd(file_name):
+    """Convert x-ray diffraction file."""
+
     try:
         df = pd.read_csv(
             file_name, sep="\s+", engine="python", header=0, index_col=False,
@@ -67,22 +70,23 @@ def transform_data_xrd(file_name):
         }
 
         delete_file(file_name)
-        return (True, xx)
+        return True, xx
     except Error as err:
-        return (False, err)
+        return False, err
 
 
 def transform_data_cellpy(file_name):
+    """Use cellpy to convert cell cycling files"""
+
     # log.setup_logging(default_level="DEBUG")
     try:
-        mass = 1
         d = cellreader.CellpyData()
         d.from_raw(file_name)
         d.make_summary()
 
         c = d.cell
         df_raw = c.raw
-        # multiple with 1000 for mA and mAh
+        # multiply with 1000 for mA and mAh
         df_raw[
             [
                 "current",
@@ -170,12 +174,13 @@ def transform_data_cellpy(file_name):
             "experiment_data": out_raw,
         }
         delete_file(file_name)
-        return (True, xx)
+        return True, xx
     except Error as err:
-        return (False, err)
+        return False, err
 
 
 def insert_value(json_value):
+    """Add JSON to PostgreSQL."""
     try:
         # Connect to an existing database
         connection = psycopg2.connect(
