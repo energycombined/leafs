@@ -3,6 +3,8 @@
 import gzip
 import shutil
 from pathlib import Path
+from flaskr import flaskr
+import tempfile
 
 import pytest
 from werkzeug.datastructures import FileStorage
@@ -13,10 +15,24 @@ FIXTURE_DIR = Path(__file__).parents[1].resolve() / "test_data"
 
 
 @pytest.fixture
-def client():
-    """Flask app client"""
-    return flask_server.app.test_client()
 
+def client():
+    db_fd, flaskr.app.config['DATABASE'] = tempfile.mkstemp()
+    flaskr.app.config['TESTING'] = True
+
+    with flaskr.app.test_client() as client:
+        with flaskr.app.app_context():
+            flaskr.init_db()
+        yield client
+
+    os.close(db_fd)
+    os.unlink(flaskr.app.config['DATABASE'])
+
+def test_empty_db(client):
+    """Start with a blank database."""
+
+    rv = client.get('/')
+    assert b'No entries here so far' in rv.data
 
 def test_import(client):
     pass
