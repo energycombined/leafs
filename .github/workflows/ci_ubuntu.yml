@@ -51,4 +51,4 @@ jobs:
       - name: Run pytest
         run: |
           echo Running pytest
-          pytest --exitfirst --verbose --failed-first -s
+          pytest --verbose
