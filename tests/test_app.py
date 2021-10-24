@@ -3,18 +3,36 @@
 import gzip
 import shutil
 from pathlib import Path
+from flaskr import flaskr
+import tempfile
 
 import pytest
 from werkzeug.datastructures import FileStorage
 
 from leafspy import flask_server
 
+FIXTURE_DIR = Path(__file__).parents[1].resolve() / "test_data"
+
 
 @pytest.fixture
-def client():
-    """Flask app client"""
-    return flask_server.app.test_client()
 
+def client():
+    db_fd, flaskr.app.config['DATABASE'] = tempfile.mkstemp()
+    flaskr.app.config['TESTING'] = True
+
+    with flaskr.app.test_client() as client:
+        with flaskr.app.app_context():
+            flaskr.init_db()
+        yield client
+
+    os.close(db_fd)
+    os.unlink(flaskr.app.config['DATABASE'])
+
+def test_empty_db(client):
+    """Start with a blank database."""
+
+    rv = client.get('/')
+    assert b'No entries here so far' in rv.data
 
 def test_import(client):
     pass
@@ -54,13 +72,15 @@ def test_upload_file_post_no_file(client):
 
 def test_upload_file_post_arbin(client, tmp_path):
     arbin_test_file = "546_ES_Fe02CDvsNi_HalleMix_Repro.res"
-    arbin_file_path = Path("../test_data") / arbin_test_file
+    arbin_file_path = FIXTURE_DIR / arbin_test_file
     temp_gz_file_path = tmp_path / "arbin_test_file.res.gz"
     assert arbin_file_path.is_file()
 
     with open(arbin_file_path, "rb") as f_in:
         with gzip.open(temp_gz_file_path, "wb") as f_out:
             shutil.copyfileobj(f_in, f_out)
+
+    assert temp_gz_file_path.is_file()
 
     arbin_file = FileStorage(
         stream=open(temp_gz_file_path, "rb"),
@@ -78,6 +98,7 @@ def test_upload_file_post_arbin(client, tmp_path):
 
     response = client.post(url, data=data, content_type="multipart/form-data")
     payload = response.get_json()
+
     assert "experiment_data" in payload.keys()
     assert "experiment_info" in payload.keys()
     assert response.status_code == 200
