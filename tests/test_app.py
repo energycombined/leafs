@@ -3,7 +3,10 @@
 import gzip
 import shutil
 from pathlib import Path
-from flaskr import flaskr
+
+# # COMMENT JEPE: I think flaskr is not a library, but an example note-taking app
+# from flaskr import flaskr
+
 import tempfile
 
 import pytest
@@ -15,24 +18,35 @@ FIXTURE_DIR = Path(__file__).parents[1].resolve() / "test_data"
 
 
 @pytest.fixture
-
 def client():
-    db_fd, flaskr.app.config['DATABASE'] = tempfile.mkstemp()
-    flaskr.app.config['TESTING'] = True
+    """Flask app client"""
+    return flask_server.app.test_client()
 
-    with flaskr.app.test_client() as client:
-        with flaskr.app.app_context():
-            flaskr.init_db()
-        yield client
 
-    os.close(db_fd)
-    os.unlink(flaskr.app.config['DATABASE'])
+# @pytest.fixture
+#
+# def client():
+#     db_fd, flaskr.app.config['DATABASE'] = tempfile.mkstemp()
+#     flaskr.app.config['TESTING'] = True
+#
+#     with flaskr.app.test_client() as client:
+#         with flaskr.app.app_context():
+#             flaskr.init_db()
+#         yield client
+#
+#     os.close(db_fd)
+#     os.unlink(flaskr.app.config['DATABASE'])
 
-def test_empty_db(client):
-    """Start with a blank database."""
 
-    rv = client.get('/')
-    assert b'No entries here so far' in rv.data
+# # COMMENT JEPE: This does not work!
+#      the flaskr app probably has '/' defined, but I dont think leafspy.flask_server has any
+#      (function with @app.route("/") above)
+# def test_empty_db(client):
+#     """Start with a blank database."""
+#
+#     rv = client.get('/')
+#     assert b'No entries here so far' in rv.data
+
 
 def test_import(client):
     pass
