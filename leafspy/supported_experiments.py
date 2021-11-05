@@ -12,6 +12,7 @@ accepted_instruments = [
     "BIOLOGIC-VMP3",
     "BIOLOGIC-MPG2",
     "STOE-STADI P",
+    "MACCOR-UBHAM",
 ]
 used_functions = ["galvani", "cellpy", "xrd_custom"]
 
@@ -21,5 +22,8 @@ used_functions = ["galvani", "cellpy", "xrd_custom"]
 accepted_combinations = {
     0: {0: {1: "galvani", 2: "galvani"}, },
     1: {1: {0: "cellpy"}, },
-    2: {3: {3: "xrd_custom"}},
+    2: {
+        1: {4: "cellpy"},
+        3: {3: "xrd_custom"}
+    },
 }

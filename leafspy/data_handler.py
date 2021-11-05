@@ -1,6 +1,6 @@
 """Data conversion routines"""
 
-from cellpy import cellreader
+import cellpy
 import psycopg2
 from psycopg2 import Error
 from galvani import BioLogic
@@ -17,7 +17,7 @@ def delete_file(file_name):
         print("error while deleting file...")
 
 
-def transform_data_galvani(file_name):
+def transform_data_galvani(file_name, **kwargs):
     """Use Galvani to convert BioLogic .mpr files"""
 
     try:
@@ -45,7 +45,7 @@ def transform_data_galvani(file_name):
         return False, err
 
 
-def transform_data_xrd(file_name):
+def transform_data_xrd(file_name, **kwargs):
     """Convert x-ray diffraction file."""
 
     try:
@@ -75,25 +75,51 @@ def transform_data_xrd(file_name):
         return False, err
 
 
-def transform_data_cellpy(file_name):
+def _cellpy_instruments(instrument, test_type, extension):
+    cellpy_instrument = None
+    if (instrument, test_type, extension) == ('ARBIN-BT-2000', 'CHARGE-DISCHARGE-GALVANOSTATIC CYCLING', 'RES'):
+        cellpy_instrument = "arbin_res"
+    elif (instrument, test_type, extension) == ('MACCOR-UBHAM', 'CHARGE-DISCHARGE-GALVANOSTATIC CYCLING', 'TXT'):
+        cellpy_instrument = "maccor_txt"
+    return cellpy_instrument
+
+
+def transform_data_cellpy(file_name, **kwargs):
     """Use cellpy to convert cell cycling files"""
+    instrument = kwargs.pop("instrument", None)
+    test_type = kwargs.pop("test_type", None)
+    extension = kwargs.pop("extension", None)
 
-    # log.setup_logging(default_level="DEBUG")
+    # THIS SHOULD BE FIXED BY ALLOWING ADDITIONAL INFORMATION TO PASS TO THE FUNCTION FROM THE ROUTE
+    if extension in ["CSV", "TXT"]:
+        sep = kwargs.pop("sep", "\t")
+    print()
+    print(f"{file_name=}")
+
+    cellpy_instrument = _cellpy_instruments(instrument, test_type, extension)
+    print(f"{cellpy_instrument=}")
+
     try:
-        d = cellreader.CellpyData()
-        d.from_raw(file_name)
-        d.make_summary()
-
+        print("Trying to run cellpy.get")
+        d = cellpy.get(filename=file_name, instrument=cellpy_instrument, sep=sep, **kwargs)
+        print("RETRIEVED CELLPY OBJECT")
+        # print(d)
         c = d.cell
+        print("RETRIEVED CELL")
+        # print(c)
         df_raw = c.raw
+        # print(df_raw)
         # multiply with 1000 for mA and mAh
+        print("selecting columns from the raw frame:")
+        print(df_raw.columns)
+        # IT FAILS HERE! ------------------------------------------ JEPE WILL FIX NEXT WEEK ----------------
         df_raw[
             [
                 "current",
                 "charge_capacity",
                 "discharge_capacity",
-                "charge_energy",
-                "discharge_energy",
+                "charge_energy",  # MISSING
+                "discharge_energy",  # MISSING
             ]
         ] = (
             df_raw[
@@ -101,15 +127,18 @@ def transform_data_cellpy(file_name):
                     "current",
                     "charge_capacity",
                     "discharge_capacity",
-                    "charge_energy",
-                    "discharge_energy",
+                    "charge_energy",  # MISSING
+                    "discharge_energy",  # MISSING
                 ]
             ]
             * 1000
         )
 
+        print("-----> OK1")
         df_sum = c.summary
         df_sum["cycle_index"] = df_sum.index
+        print("-----> OK2")
+        print(df_sum)
         df_sum2 = df_sum[
             [
                 "cycle_index",
