@@ -77,9 +77,17 @@ def transform_data_xrd(file_name, **kwargs):
 
 def _cellpy_instruments(instrument, test_type, extension):
     cellpy_instrument = None
-    if (instrument, test_type, extension) == ('ARBIN-BT-2000', 'CHARGE-DISCHARGE-GALVANOSTATIC CYCLING', 'RES'):
+    if (instrument, test_type, extension) == (
+        "ARBIN-BT-2000",
+        "CHARGE-DISCHARGE-GALVANOSTATIC CYCLING",
+        "RES",
+    ):
         cellpy_instrument = "arbin_res"
-    elif (instrument, test_type, extension) == ('MACCOR-UBHAM', 'CHARGE-DISCHARGE-GALVANOSTATIC CYCLING', 'TXT'):
+    elif (instrument, test_type, extension) == (
+        "MACCOR-UBHAM",
+        "CHARGE-DISCHARGE-GALVANOSTATIC CYCLING",
+        "TXT",
+    ):
         cellpy_instrument = "maccor_txt"
     return cellpy_instrument
 
@@ -90,28 +98,21 @@ def transform_data_cellpy(file_name, **kwargs):
     test_type = kwargs.pop("test_type", None)
     extension = kwargs.pop("extension", None)
 
+    # HARD-CODED SEP
     # THIS SHOULD BE FIXED BY ALLOWING ADDITIONAL INFORMATION TO PASS TO THE FUNCTION FROM THE ROUTE
     if extension in ["CSV", "TXT"]:
-        sep = kwargs.pop("sep", "\t")
-    print()
-    print(f"{file_name=}")
+        kwargs["sep"] = "\t"
 
     cellpy_instrument = _cellpy_instruments(instrument, test_type, extension)
-    print(f"{cellpy_instrument=}")
 
     try:
-        print("Trying to run cellpy.get")
-        d = cellpy.get(filename=file_name, instrument=cellpy_instrument, sep=sep, **kwargs)
-        print("RETRIEVED CELLPY OBJECT")
-        # print(d)
+        d = cellpy.get(filename=file_name, instrument=cellpy_instrument, **kwargs)
         c = d.cell
-        print("RETRIEVED CELL")
-        # print(c)
         df_raw = c.raw
         # print(df_raw)
         # multiply with 1000 for mA and mAh
-        print("selecting columns from the raw frame:")
-        print(df_raw.columns)
+        # print("selecting columns from the raw frame:")
+        # print(df_raw.columns)
         # IT FAILS HERE! ------------------------------------------ JEPE WILL FIX NEXT WEEK ----------------
         df_raw[
             [
@@ -134,11 +135,11 @@ def transform_data_cellpy(file_name, **kwargs):
             * 1000
         )
 
-        print("-----> OK1")
+        # print("-----> OK1")
         df_sum = c.summary
         df_sum["cycle_index"] = df_sum.index
-        print("-----> OK2")
-        print(df_sum)
+        # print("-----> OK2")
+        # print(df_sum)
         df_sum2 = df_sum[
             [
                 "cycle_index",

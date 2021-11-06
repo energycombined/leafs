@@ -20,10 +20,7 @@ used_functions = ["galvani", "cellpy", "xrd_custom"]
 # file -> test -> instrument --> used function
 
 accepted_combinations = {
-    0: {0: {1: "galvani", 2: "galvani"}, },
-    1: {1: {0: "cellpy"}, },
-    2: {
-        1: {4: "cellpy"},
-        3: {3: "xrd_custom"}
-    },
+    0: {0: {1: "galvani", 2: "galvani"},},
+    1: {1: {0: "cellpy"},},
+    2: {1: {4: "cellpy"}, 3: {3: "xrd_custom"}},
 }

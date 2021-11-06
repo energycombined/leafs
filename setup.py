@@ -14,13 +14,7 @@ with open("HISTORY.md") as history_file:
 
 included_packages = find_packages(exclude=["build", "docs", "templates"])
 
-requirements = [
-    "flask",
-    "cellpy",
-    "galvani",
-    "werkzeug",
-    "psycopg2"
-]
+requirements = ["flask", "cellpy==0.4.2a1", "galvani", "werkzeug", "psycopg2"]
 
 test_requirements = requirements + [
     "black",
@@ -32,10 +26,10 @@ setup(
     version=version,
     description=description,
     long_description=readme + "\n\n" + history,
-    url='https://github.com/energycombined/leafs',
-    author='energycombined',
-    author_email='t.vandijk@uniresearch.com',
-    license='MIT',
+    url="https://github.com/energycombined/leafs",
+    author="energycombined",
+    author_email="t.vandijk@uniresearch.com",
+    license="MIT",
     packages=included_packages,
     install_requires=requirements,
     zip_safe=False,

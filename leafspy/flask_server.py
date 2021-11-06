@@ -163,7 +163,12 @@ def upload_file():
                 with open(location, "wb") as f_out:
                     f_out.write(file)
 
-                success, data = functions[data_converter](location, instrument=instrument.upper(), test_type=test_type.upper(), extension=extension.upper())
+                success, data = functions[data_converter](
+                    location,
+                    instrument=instrument.upper(),
+                    test_type=test_type.upper(),
+                    extension=extension.upper(),
+                )
                 # print(f'{extension}: {test_type.upper()} :{instrument.upper}')
                 if success:
                     if len(files) > 1:
