@@ -4,7 +4,7 @@ from setuptools import setup, find_packages
 
 name = "leafspy"
 description = "Data conversion for Leafs."
-version = "0.1.0"
+version = "0.1.1"
 
 with open("README.md") as readme_file:
     readme = readme_file.read()
