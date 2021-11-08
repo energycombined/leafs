@@ -1,5 +1,9 @@
 """Data conversion routines"""
 
+# TODO: create a dataclass that contains the response instead of using a dictionary. This makes it possible to later on
+#  edit how we would like to make the response without manually updating each transform_ function.
+
+
 import cellpy
 import psycopg2
 from psycopg2 import Error
@@ -76,6 +80,7 @@ def transform_data_xrd(file_name, **kwargs):
 
 
 def _cellpy_instruments(instrument, test_type, extension):
+    # Temporary hack to translate from leafspy constants to cellpy constants
     cellpy_instrument = None
     if (instrument, test_type, extension) == (
         "ARBIN-BT-2000",
@@ -99,7 +104,7 @@ def transform_data_cellpy(file_name, **kwargs):
     extension = kwargs.pop("extension", None)
 
     # HARD-CODED SEP
-    # THIS SHOULD BE FIXED BY ALLOWING ADDITIONAL INFORMATION TO PASS TO THE FUNCTION FROM THE ROUTE
+    # TODO: THIS SHOULD BE FIXED BY ALLOWING ADDITIONAL INFORMATION TO PASS TO THE FUNCTION FROM THE ROUTE
     if extension in ["CSV", "TXT"]:
         kwargs["sep"] = "\t"
 
@@ -209,6 +214,7 @@ def transform_data_cellpy(file_name, **kwargs):
         return False, err
 
 
+# TODO: move all the methods and functions not directly related to the data conversion to a seperate module.
 def insert_value(json_value):
     """Add JSON to PostgreSQL."""
     try:
