@@ -63,7 +63,6 @@ def test_base_route_that_does_not_exist(client):
 
 def test_upload_file_get(client):
     url = "/upload_file"
-
     response = client.get(url)
     assert b"Upload" in response.get_data()
     assert response.status_code == 200
@@ -117,6 +116,38 @@ def test_upload_file_post_arbin(client, tmp_path):
     assert "experiment_data" in payload.keys()
     assert "experiment_info" in payload.keys()
     assert response.status_code == 200
+
+
+def test_upload_file_post_maccor_txt(client, tmp_path):
+    test_file = "Charge-discharge/Maccor/01_UBham_M50_Validation_0deg_01.txt"
+    test_file_path = FIXTURE_DIR / test_file
+    tmp_gz_file = "maccor_test_file.txt.gz"
+    temp_gz_file_path = tmp_path / tmp_gz_file
+    assert test_file_path.is_file()
+
+    with open(test_file_path, "rb") as f_in:
+        with gzip.open(temp_gz_file_path, "wb") as f_out:
+            shutil.copyfileobj(f_in, f_out)
+
+    assert temp_gz_file_path.is_file()
+
+    tmp_file = FileStorage(stream=open(temp_gz_file_path, "rb"), filename=tmp_gz_file,)
+
+    url = "/upload_file"
+    data = {
+        "test_type": "CHARGE-DISCHARGE",
+        "test_type_subcategory": "GALVANOSTATIC CYCLING",
+        "instrument": "UBHAM",  # Change this
+        "instrument_brand": "MACCOR",
+        "files": tmp_file,
+    }
+
+    response = client.post(url, data=data, content_type="multipart/form-data")
+    payload = response.get_json()
+
+    # assert "experiment_data" in payload.keys()
+    # assert "experiment_info" in payload.keys()
+    # assert response.status_code == 200
 
 
 def test_upload_file_post_maccor_txt(client, tmp_path):
