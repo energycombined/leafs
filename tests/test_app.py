@@ -177,9 +177,9 @@ def test_upload_file_post_maccor_txt(client, tmp_path):
     response = client.post(url, data=data, content_type="multipart/form-data")
     payload = response.get_json()
 
-    # assert "experiment_data" in payload.keys()
-    # assert "experiment_info" in payload.keys()
-    # assert response.status_code == 200
+    assert "experiment_data" in payload.keys()
+    assert "experiment_info" in payload.keys()
+    assert response.status_code == 200
 
 
 @pytest.mark.parametrize(

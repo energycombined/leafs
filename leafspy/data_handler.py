@@ -124,8 +124,8 @@ def transform_data_cellpy(file_name, **kwargs):
                 "current",
                 "charge_capacity",
                 "discharge_capacity",
-                "charge_energy",  # MISSING
-                "discharge_energy",  # MISSING
+                # "charge_energy",  # MISSING
+                # "discharge_energy",  # MISSING
             ]
         ] = (
             df_raw[
@@ -133,8 +133,8 @@ def transform_data_cellpy(file_name, **kwargs):
                     "current",
                     "charge_capacity",
                     "discharge_capacity",
-                    "charge_energy",  # MISSING
-                    "discharge_energy",  # MISSING
+                    # "charge_energy",  # MISSING
+                    # "discharge_energy",  # MISSING
                 ]
             ]
             * 1000
