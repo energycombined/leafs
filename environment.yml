@@ -3,10 +3,9 @@ channels:
    - conda-forge
    - defaults
 dependencies:
-   - python >=3.7
+   - python >=3.8
    - pip
    - backcall==0.2.0
-   - cellpy==0.4.0
    - certifi==2021.5.30
    - cffi==1.14.6
    - charset-normalizer==2.0.3
@@ -65,3 +64,6 @@ dependencies:
        - galvani==0.2.0
        - jupyter-client==6.1.12
        - jupyter-core==4.7.1
+       - pytest
+       - black
+       - cellpy==0.4.2b1
