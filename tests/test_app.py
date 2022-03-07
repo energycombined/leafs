@@ -4,10 +4,6 @@ import gzip
 import shutil
 from pathlib import Path
 import logging
-
-# # COMMENT JEPE: I think flaskr is not a library, but an example note-taking app
-# from flaskr import flaskr
-
 import tempfile
 
 import pytest
@@ -23,31 +19,6 @@ FIXTURE_DIR = Path(__file__).parents[1].resolve() / "test_data"
 def client():
     """Flask app client"""
     return flask_server.app.test_client()
-
-
-# @pytest.fixture
-#
-# def client():
-#     db_fd, flaskr.app.config['DATABASE'] = tempfile.mkstemp()
-#     flaskr.app.config['TESTING'] = True
-#
-#     with flaskr.app.test_client() as client:
-#         with flaskr.app.app_context():
-#             flaskr.init_db()
-#         yield client
-#
-#     os.close(db_fd)
-#     os.unlink(flaskr.app.config['DATABASE'])
-
-
-# # COMMENT JEPE: This does not work!
-#      the flaskr app probably has '/' defined, but I dont think leafspy.flask_server has any
-#      (function with @app.route("/") above)
-# def test_empty_db(client):
-#     """Start with a blank database."""
-#
-#     rv = client.get('/')
-#     assert b'No entries here so far' in rv.data
 
 
 def test_import(client):
@@ -144,13 +115,12 @@ def test_upload_file_post_maccor_txt(client, tmp_path):
 
     response = client.post(url, data=data, content_type="multipart/form-data")
     payload = response.get_json()
-
     # assert "experiment_data" in payload.keys()
     # assert "experiment_info" in payload.keys()
     # assert response.status_code == 200
 
 
-def test_upload_file_post_maccor_txt(client, tmp_path):
+def test_upload_file_post_maccor_txt_with_model_UBham_SIMBA(client, tmp_path):
     test_file = "Charge-discharge/Maccor/01_UBham_M50_Validation_0deg_01.txt"
     test_file_path = FIXTURE_DIR / test_file
     tmp_gz_file = "maccor_test_file.txt.gz"
@@ -171,6 +141,40 @@ def test_upload_file_post_maccor_txt(client, tmp_path):
         "test_type_subcategory": "GALVANOSTATIC CYCLING",
         "instrument": "UBHAM",  # Change this
         "instrument_brand": "MACCOR",
+        "data_format_model": "UBHAM_SIMBA",
+        "files": tmp_file,
+    }
+
+    response = client.post(url, data=data, content_type="multipart/form-data")
+    payload = response.get_json()
+
+    assert "experiment_data" in payload.keys()
+    assert "experiment_info" in payload.keys()
+    assert response.status_code == 200
+
+
+def test_upload_file_post_maccor_txt_with_model_WMG_SIMBA(client, tmp_path):
+    test_file = "Charge-discharge/Maccor/1044-CT-MaccorExport.txt"
+    test_file_path = FIXTURE_DIR / test_file
+    tmp_gz_file = "maccor_test_file.txt.gz"
+    temp_gz_file_path = tmp_path / tmp_gz_file
+    assert test_file_path.is_file()
+
+    with open(test_file_path, "rb") as f_in:
+        with gzip.open(temp_gz_file_path, "wb") as f_out:
+            shutil.copyfileobj(f_in, f_out)
+
+    assert temp_gz_file_path.is_file()
+
+    tmp_file = FileStorage(stream=open(temp_gz_file_path, "rb"), filename=tmp_gz_file,)
+
+    url = "/upload_file"
+    data = {
+        "test_type": "CHARGE-DISCHARGE",
+        "test_type_subcategory": "GALVANOSTATIC CYCLING",
+        "instrument": "UBHAM",  # Change this
+        "instrument_brand": "MACCOR",
+        "data_format_model": "WMG_SIMBA",
         "files": tmp_file,
     }
 

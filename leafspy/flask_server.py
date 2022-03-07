@@ -22,6 +22,9 @@ from .supported_experiments import (
 
 
 UPLOAD_FOLDER = "./uploads"
+ALLOWED_OPTIONAL_KEYWORD_ARGUMENTS = [
+    "data_format_model",
+]
 
 app = Flask(__name__)
 app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
@@ -29,6 +32,7 @@ app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
 
 def temporary_storage_path(extension):
     """Path to a temporary directory for storing intermediate file(s)."""
+
     new_file_name = (
         "".join(
             random.choice(string.ascii_uppercase + string.digits) for _ in range(25)
@@ -46,12 +50,15 @@ def temporary_storage_path(extension):
 
 def check_gzip(filename):
     """Check that the file is a gzip file."""
+
     return Path(filename).suffix == ".gz"
 
 
 def allowed_test(extension, test_type, instrument):
     """Check if the file is appropriate type."""
+
     logging.debug(f"File info: {extension=}, {test_type=}, {instrument=}")
+
     if extension not in accepted_files:
         return (
             False,
@@ -70,9 +77,11 @@ def allowed_test(extension, test_type, instrument):
             f"{instrument} not yet supported, currently we support the following instruments {accepted_instruments}",
             "",
         )
+
     file_index = accepted_files.index(extension)
     test_index = accepted_tests.index(test_type)
     instrument_index = accepted_instruments.index(instrument)
+
     if test_index in accepted_combinations[file_index].keys():
         if instrument_index in accepted_combinations[file_index][test_index]:
             return (
@@ -93,6 +102,7 @@ def allowed_test(extension, test_type, instrument):
 @app.errorhandler(404)
 def page_not_found(error):
     """404."""
+
     logging.debug(f"404: {error}")
     return "This page does not exist", 404
 
@@ -100,95 +110,97 @@ def page_not_found(error):
 @app.route("/upload_file", methods=["GET", "POST"])
 def upload_file():
     """Route for posting files."""
-    # This method should probably only handle POST requests
-    out = """
-    <!doctype html>
-    <title>Upload new File</title>
-    <h1>Upload new File</h1>
-    <form method=post enctype=multipart/form-data>
-      <input type=file name=file>
-      <input type=submit value=Upload>
-    </form>
-    """
 
-    if request.method == "POST":
-        # check if the post request has the file part
-        test_type = request.form.get("test_type")
-        test_type_subcategory = request.form.get("test_type_subcategory")
-        instrument = request.form.get("instrument")
-        brand = request.form.get("instrument_brand")
-        if not brand:
-            return {"Code": 1, "Message": "Please provide an instrument brand"}
-        if not instrument:
-            return {"Code": 1, "Message": "Please provide an instrument"}
-        if not test_type:
-            return {"Code": 1, "Message": "Please provide a test type"}
-        if test_type == "XRD":
-            test_type = test_type
-        else:
-            test_type = "-".join([test_type, test_type_subcategory])
+    if request.method != "POST":
+        out = """
+        <!doctype html>
+        <title>Upload new File</title>
+        <h1>Upload new File</h1>
+        <form method=post enctype=multipart/form-data>
+          <input type=file name=file>
+          <input type=submit value=Upload>
+        </form>
+        """
+        return out
 
-            # if not test_subtype:
-            # return {'Code':1, 'Message':'Please provide a subtest type'}
+    test_type = request.form.get("test_type")
+    test_type_subcategory = request.form.get("test_type_subcategory")
+    instrument = request.form.get("instrument")
+    brand = request.form.get("instrument_brand")
 
-        #    return {'Code':1, 'Message':'Please provide a test subtype'}
-        instrument = brand + "-" + instrument
-        # if not test_subtype:
-        #    test_type = test_type
-        # else:
-        #    test_type= test_type + "-" + test_subtype
-        files = request.files.getlist("files")
+    optional_key_word_arguments = {}
+    for optional_kwarg in ALLOWED_OPTIONAL_KEYWORD_ARGUMENTS:
+        if optional_kw_value := request.form.get(optional_kwarg):
+            optional_key_word_arguments[optional_kwarg] = optional_kw_value  # this might be case-sensitive
 
-        if len(files) == 0:
-            return {"Code": 1, "Message": "No file attached"}
+    if not brand:
+        return {"Code": 1, "Message": "Please provide an instrument brand"}
 
-        # If the user does not select a file, the browser submits an
-        # empty file without a filename.
-        file = files[0]
+    if not instrument:
+        return {"Code": 1, "Message": "Please provide an instrument"}
 
-        if not check_gzip(file.filename):
-            return {"Code": 1, "Message": "Only gz files allowed"}
-        extension = file.filename.rsplit(".", maxsplit=2)[-2].upper()
-        filename = secure_filename(file.filename.rsplit(".", maxsplit=2)[0])
+    if not test_type:
+        return {"Code": 1, "Message": "Please provide a test type"}
 
-        file = gzip.open(file, "rb")
-        file = file.read()
+    if test_type == "XRD":
+        test_type = test_type
+    else:
+        test_type = "-".join([test_type, test_type_subcategory])
 
-        if filename == "":
-            return {"Code": 1, "Message": "File has no name"}
-        if file:
-            allowed, message, data_converter = allowed_test(
-                extension, test_type.upper(), instrument.upper()
-            )
-            if allowed:
-                location = temporary_storage_path(extension)
-                with open(location, "wb") as f_out:
-                    f_out.write(file)
+    instrument = brand + "-" + instrument
 
-                success, data = functions[data_converter](
-                    location,
-                    instrument=instrument.upper(),
-                    test_type=test_type.upper(),
-                    extension=extension.upper(),
-                )
-                # print(f'{extension}: {test_type.upper()} :{instrument.upper}')
-                if success:
-                    if len(files) > 1:
-                        # message={'Code':0, 'Message':f"Transformed successfully. Only the first file ({filename}) was transformed, multiple file transformation is not yet supported."}
-                        # return {'experiment_info': data['experiment_info'], 'experiment_summary': data['experiment_summary'], 'experiment_data': data['experiment_data']}
-                        return data
-                    # return {'experiment_info': data['experiment_info'], 'experiment_summary': data['experiment_summary'],'experiment_data': data['experiment_data']}
-                    return data
+    files = request.files.getlist("files")
 
-                else:
-                    return {
-                        "Code": 1,
-                        "Message": "Unknown Error while transforming file.",
-                    }
-            else:
-                return {"Code": 1, "Message": message}
+    if len(files) == 0:
+        return {"Code": 1, "Message": "No file attached"}
 
-    return out
+    # only supporting one file at the moment:
+    file = files[0]
+
+    if not check_gzip(file.filename):
+        return {"Code": 1, "Message": "Only gz files allowed"}
+
+    extension = file.filename.rsplit(".", maxsplit=2)[-2].upper()
+    filename = secure_filename(file.filename.rsplit(".", maxsplit=2)[0])
+    if filename == "":
+        return {"Code": 1, "Message": "File has no name"}
+
+    file = gzip.open(file, "rb")
+    file = file.read()
+    if not file:
+        return {"Code": 1, "Message": "File is empty"}
+
+    allowed, message, data_converter = allowed_test(
+        extension, test_type.upper(), instrument.upper()
+    )
+    if not allowed:
+        return {"Code": 1, "Message": message}
+
+    location = temporary_storage_path(extension)
+    with open(location, "wb") as f_out:
+        f_out.write(file)
+
+    success, data = functions[data_converter](
+        location,
+        instrument=instrument.upper(),
+        test_type=test_type.upper(),
+        extension=extension.upper(),
+        **optional_key_word_arguments,
+    )
+
+    if success:
+        if len(files) > 1:
+            # message={'Code':0, 'Message':f"Transformed successfully. Only the first file ({filename}) was transformed, multiple file transformation is not yet supported."}
+            # return {'experiment_info': data['experiment_info'], 'experiment_summary': data['experiment_summary'], 'experiment_data': data['experiment_data']}
+            return data
+        # return {'experiment_info': data['experiment_info'], 'experiment_summary': data['experiment_summary'],'experiment_data': data['experiment_data']}
+        return data
+
+    else:
+        return {
+            "Code": 1,
+            "Message": "Unknown Error while transforming file.",
+        }
 
 
 @app.route("/uploads/<name>")

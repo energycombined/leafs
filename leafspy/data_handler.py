@@ -102,6 +102,7 @@ def transform_data_cellpy(file_name, **kwargs):
     instrument = kwargs.pop("instrument", None)
     test_type = kwargs.pop("test_type", None)
     extension = kwargs.pop("extension", None)
+    model = kwargs.pop("data_format_model", None)
 
     # HARD-CODED SEP
     # TODO: THIS SHOULD BE FIXED BY ALLOWING ADDITIONAL INFORMATION TO PASS TO THE FUNCTION FROM THE ROUTE
@@ -111,7 +112,7 @@ def transform_data_cellpy(file_name, **kwargs):
     cellpy_instrument = _cellpy_instruments(instrument, test_type, extension)
 
     try:
-        d = cellpy.get(filename=file_name, instrument=cellpy_instrument, **kwargs)
+        d = cellpy.get(filename=file_name, instrument=cellpy_instrument, model=model, **kwargs)
         c = d.cell
         df_raw = c.raw
         # print(df_raw)
