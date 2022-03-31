@@ -5,6 +5,7 @@ from leafspy import data_handler
 import cellpy
 
 filename = Path("../test_data/Charge-discharge/Maccor/01_UBham_M50_Validation_0deg_01.txt")
+filename = '/Users/thomasvandijk/Documents/LEAFS - github/leafs'
 
 print(filename.is_file())
 
