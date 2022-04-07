@@ -1,7 +1,5 @@
 """API and server for Leafs"""
 
-# TODO: rename this to either app.py or leafs_server.py
-
 import os
 from pathlib import Path
 import random
@@ -131,7 +129,9 @@ def upload_file():
     optional_key_word_arguments = {}
     for optional_kwarg in ALLOWED_OPTIONAL_KEYWORD_ARGUMENTS:
         if optional_kw_value := request.form.get(optional_kwarg):
-            optional_key_word_arguments[optional_kwarg] = optional_kw_value  # this might be case-sensitive
+            optional_key_word_arguments[
+                optional_kwarg
+            ] = optional_kw_value  # this might be case-sensitive
 
     if not brand:
         return {"Code": 1, "Message": "Please provide an instrument brand"}

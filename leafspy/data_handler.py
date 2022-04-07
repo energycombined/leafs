@@ -3,14 +3,15 @@
 # TODO: create a dataclass that contains the response instead of using a dictionary. This makes it possible to later on
 #  edit how we would like to make the response without manually updating each transform_ function.
 
+import json
+import logging
+import os
 
 import cellpy
 import psycopg2
 from psycopg2 import Error
 from galvani import BioLogic
 import pandas as pd
-import json
-import os
 
 
 def delete_file(file_name):
@@ -18,7 +19,7 @@ def delete_file(file_name):
     try:
         os.remove(file_name)
     except IOError:
-        print("error while deleting file...")
+        logging.debug("error while deleting file...")
 
 
 def transform_data_galvani(file_name, **kwargs):
@@ -54,7 +55,11 @@ def transform_data_xrd(file_name, **kwargs):
 
     try:
         df = pd.read_csv(
-            file_name, sep="\s+", engine="python", header=0, index_col=False,
+            file_name,
+            sep="\s+",
+            engine="python",
+            header=0,
+            index_col=False,
         )
         df.columns = ["2theta", "intensity"]
         df["intensity"] = df["intensity"] / max(df["intensity"])
@@ -62,7 +67,8 @@ def transform_data_xrd(file_name, **kwargs):
         out_xrd = json.loads(df.to_json(orient="split"))
 
         # the json structure, four arrays in 1 json object.
-        # The experiment_info array might become bigger. We might want to read-out more data from the .res file. The auxiliary table, if existing, will be as long as the experiment_data file
+        # The experiment_info array might become bigger. We might want to read-out more data from the .res file.
+        # The auxiliary table, if existing, will be as long as the experiment_data file
         xx = {
             "experiment_info": {
                 "device name": "unknown",
@@ -81,7 +87,9 @@ def transform_data_xrd(file_name, **kwargs):
 
 def _cellpy_instruments(instrument, test_type, extension):
     # Temporary hack to translate from leafspy constants to cellpy constants
+
     cellpy_instrument = None
+    data_format_model = None
     if (instrument, test_type, extension) == (
         "ARBIN-BT-2000",
         "CHARGE-DISCHARGE-GALVANOSTATIC CYCLING",
@@ -89,12 +97,13 @@ def _cellpy_instruments(instrument, test_type, extension):
     ):
         cellpy_instrument = "arbin_res"
     elif (instrument, test_type, extension) == (
-        "MACCOR-UBHAM",
+        "MACCOR-S4000",
         "CHARGE-DISCHARGE-GALVANOSTATIC CYCLING",
         "TXT",
     ):
         cellpy_instrument = "maccor_txt"
-    return cellpy_instrument
+        data_format_model = "WMG_SIMBA"
+    return cellpy_instrument, data_format_model
 
 
 def transform_data_cellpy(file_name, **kwargs):
@@ -104,22 +113,33 @@ def transform_data_cellpy(file_name, **kwargs):
     extension = kwargs.pop("extension", None)
     model = kwargs.pop("data_format_model", None)
 
-    # HARD-CODED SEP
-    # TODO: THIS SHOULD BE FIXED BY ALLOWING ADDITIONAL INFORMATION TO PASS TO THE FUNCTION FROM THE ROUTE
-    if extension in ["CSV", "TXT"]:
-        kwargs["sep"] = "\t"
+    if model:
+        logging.debug(
+            f"""
+            data_format_model = {model}
+            Using data_format_model is currently not implemented in leafspy
+            - maybe one time in the future..."""
+        )
 
-    cellpy_instrument = _cellpy_instruments(instrument, test_type, extension)
+    logging.debug("using cellpy")
+    logging.debug(
+        f"""
+            {instrument=}
+            {test_type=}
+            {extension=}
+            {model=}
+"""
+    )
+
+    cellpy_instrument, model = _cellpy_instruments(instrument, test_type, extension)
 
     try:
-        d = cellpy.get(filename=file_name, instrument=cellpy_instrument, model=model, **kwargs)
+        d = cellpy.get(
+            filename=file_name, instrument=cellpy_instrument, model=model, **kwargs
+        )
         c = d.cell
         df_raw = c.raw
-        # print(df_raw)
-        # multiply with 1000 for mA and mAh
-        # print("selecting columns from the raw frame:")
-        # print(df_raw.columns)
-        # IT FAILS HERE! ------------------------------------------ JEPE WILL FIX NEXT WEEK ----------------
+
         df_raw[
             [
                 "current",
@@ -141,11 +161,8 @@ def transform_data_cellpy(file_name, **kwargs):
             * 1000
         )
 
-        # print("-----> OK1")
         df_sum = c.summary
         df_sum["cycle_index"] = df_sum.index
-        # print("-----> OK2")
-        # print(df_sum)
         df_sum2 = df_sum[
             [
                 "cycle_index",
@@ -215,7 +232,7 @@ def transform_data_cellpy(file_name, **kwargs):
         return False, err
 
 
-# TODO: move all the methods and functions not directly related to the data conversion to a seperate module.
+# TODO: move all the methods and functions not directly related to the data conversion to a separate module.
 def insert_value(json_value):
     """Add JSON to PostgreSQL."""
     try:

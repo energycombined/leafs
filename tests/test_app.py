@@ -10,7 +10,7 @@ import pytest
 from werkzeug.datastructures import FileStorage
 
 from leafspy import flask_server
-
+from leafspy.data_handler import _cellpy_instruments
 
 FIXTURE_DIR = Path(__file__).parents[1].resolve() / "test_data"
 
@@ -69,7 +69,8 @@ def test_upload_file_post_arbin(client, tmp_path):
     assert temp_gz_file_path.is_file()
 
     arbin_file = FileStorage(
-        stream=open(temp_gz_file_path, "rb"), filename="arbin_test_file.res.gz",
+        stream=open(temp_gz_file_path, "rb"),
+        filename="arbin_test_file.res.gz",
     )
 
     url = "/upload_file"
@@ -102,7 +103,10 @@ def test_upload_file_post_maccor_txt(client, tmp_path):
 
     assert temp_gz_file_path.is_file()
 
-    tmp_file = FileStorage(stream=open(temp_gz_file_path, "rb"), filename=tmp_gz_file,)
+    tmp_file = FileStorage(
+        stream=open(temp_gz_file_path, "rb"),
+        filename=tmp_gz_file,
+    )
 
     url = "/upload_file"
     data = {
@@ -120,7 +124,7 @@ def test_upload_file_post_maccor_txt(client, tmp_path):
     # assert response.status_code == 200
 
 
-def test_upload_file_post_maccor_txt_with_model_UBham_SIMBA(client, tmp_path):
+def test_upload_file_post_maccor_txt_with_model_UBHAM_SIMBA(client, tmp_path):
     test_file = "Charge-discharge/Maccor/01_UBham_M50_Validation_0deg_01.txt"
     test_file_path = FIXTURE_DIR / test_file
     tmp_gz_file = "maccor_test_file.txt.gz"
@@ -133,15 +137,18 @@ def test_upload_file_post_maccor_txt_with_model_UBham_SIMBA(client, tmp_path):
 
     assert temp_gz_file_path.is_file()
 
-    tmp_file = FileStorage(stream=open(temp_gz_file_path, "rb"), filename=tmp_gz_file,)
+    tmp_file = FileStorage(
+        stream=open(temp_gz_file_path, "rb"),
+        filename=tmp_gz_file,
+    )
 
     url = "/upload_file"
     data = {
         "test_type": "CHARGE-DISCHARGE",
         "test_type_subcategory": "GALVANOSTATIC CYCLING",
-        "instrument": "UBHAM",  # Change this
+        "instrument": "S4000",  # Change this
         "instrument_brand": "MACCOR",
-        "data_format_model": "UBHAM_SIMBA",
+        "data_format_model": "UBHAM_SIMBA",  # Not used yet
         "files": tmp_file,
     }
 
@@ -154,8 +161,12 @@ def test_upload_file_post_maccor_txt_with_model_UBham_SIMBA(client, tmp_path):
 
 
 def test_upload_file_post_maccor_txt_with_model_WMG_SIMBA(client, tmp_path):
-    test_file = "Charge-discharge/Maccor/1044-CT-MaccorExport.txt"
+    # test_file = "Charge-discharge/Maccor/1044-CT-MaccorExport.txt"
+    # test_file = "Charge-discharge/Maccor/SIM-A7-1039 - 073.txt"
+    test_file = "Charge-discharge/Maccor/SIM-A7-1047-ET - 079.txt"
+    logging.debug("Starting test...")
     test_file_path = FIXTURE_DIR / test_file
+    logging.debug(f"Test-file: {test_file_path}")
     tmp_gz_file = "maccor_test_file.txt.gz"
     temp_gz_file_path = tmp_path / tmp_gz_file
     assert test_file_path.is_file()
@@ -166,15 +177,18 @@ def test_upload_file_post_maccor_txt_with_model_WMG_SIMBA(client, tmp_path):
 
     assert temp_gz_file_path.is_file()
 
-    tmp_file = FileStorage(stream=open(temp_gz_file_path, "rb"), filename=tmp_gz_file,)
+    tmp_file = FileStorage(
+        stream=open(temp_gz_file_path, "rb"),
+        filename=tmp_gz_file,
+    )
 
     url = "/upload_file"
     data = {
         "test_type": "CHARGE-DISCHARGE",
         "test_type_subcategory": "GALVANOSTATIC CYCLING",
-        "instrument": "UBHAM",  # Change this
+        "instrument": "S4000",  # Change this
         "instrument_brand": "MACCOR",
-        "data_format_model": "WMG_SIMBA",
+        "data_format_model": "WMG_SIMBA",  # Not used yet
         "files": tmp_file,
     }
 
@@ -190,7 +204,7 @@ def test_upload_file_post_maccor_txt_with_model_WMG_SIMBA(client, tmp_path):
     "extension,test_type,test_type_sub,instrument,instrument_sub",
     [
         ("RES", "CHARGE-DISCHARGE", "GALVANOSTATIC CYCLING", "ARBIN", "BT-2000"),
-        ("TXT", "CHARGE-DISCHARGE", "GALVANOSTATIC CYCLING", "MACCOR", "UBHAM"),
+        ("TXT", "CHARGE-DISCHARGE", "GALVANOSTATIC CYCLING", "MACCOR", "S4000"),
     ],
 )
 def test_allowed_tests(extension, test_type, test_type_sub, instrument, instrument_sub):
@@ -202,3 +216,32 @@ def test_allowed_tests(extension, test_type, test_type_sub, instrument, instrume
         extension=extension, test_type=test_type, instrument=instrument
     )
     assert allowed
+
+
+@pytest.mark.parametrize(
+    "instrument,test_type,extension,cellpy_instrument,data_format_model",
+    [
+        (
+            "ARBIN-BT-2000",
+            "CHARGE-DISCHARGE-GALVANOSTATIC CYCLING",
+            "RES",
+            "arbin_res",
+            None,
+        ),
+        (
+            "MACCOR-S4000",
+            "CHARGE-DISCHARGE-GALVANOSTATIC CYCLING",
+            "TXT",
+            "maccor_txt",
+            "WMG_SIMBA",
+        ),
+    ],
+)
+def test_cellpy_instrument(
+    instrument, test_type, extension, cellpy_instrument, data_format_model
+):
+    cellpy_instrument_out, data_format_model_out = _cellpy_instruments(
+        instrument, test_type, extension
+    )
+    assert cellpy_instrument == cellpy_instrument_out
+    assert data_format_model == data_format_model_out
