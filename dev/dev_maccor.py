@@ -1,14 +1,14 @@
 from pathlib import Path
+import sys 
 
-from leafspy import data_handler
+sys.path.append("/Users/thomasvandijk/Documents/LEAFS - github/leafs/leafspy")
+
+import data_handler
 import cellpy
 
-filename = Path(
-    "../test_data/Charge-discharge/Maccor/01_UBham_M50_Validation_0deg_01.txt"
-)
-filename = "/Users/thomasvandijk/Documents/LEAFS - github/leafs"
+filename = "/Users/thomasvandijk/Documents/LEAFS - github/leafs/test_data/Charge-discharge/Maccor/SIM-A7-1039 - 073.txt"
 
-print(filename.is_file())
+# print(filename.is_file())
 
 instrument, test_type, extension = (
     "MACCOR-UBHAM",
@@ -16,9 +16,16 @@ instrument, test_type, extension = (
     "TXT",
 )
 
-cellpy_instrument = data_handler._cellpy_instruments(instrument, test_type, extension)
-print(cellpy_instrument)
-d = cellpy.get(filename=filename, instrument=cellpy_instrument, sep="\t")
+# cellpy_instrument = data_handler._cellpy_instruments(instrument, test_type, extension)
+# print(cellpy_instrument)
+cellpy_instrument = "maccor_txt"
+d = cellpy.get(
+            filename=filename, instrument=cellpy_instrument, model='WMG_SIMBA')
+c = d.cell
+df_raw = c.raw
+
+# d = cellpy.get(filename=filename, instrument=cellpy_instrument, sep="\t")
 raw = d.cell.raw
 print(raw.columns)
 print("OK")
+

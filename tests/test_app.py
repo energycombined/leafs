@@ -162,8 +162,8 @@ def test_upload_file_post_maccor_txt_with_model_UBHAM_SIMBA(client, tmp_path):
 
 def test_upload_file_post_maccor_txt_with_model_WMG_SIMBA(client, tmp_path):
     # test_file = "Charge-discharge/Maccor/1044-CT-MaccorExport.txt"
-    # test_file = "Charge-discharge/Maccor/SIM-A7-1039 - 073.txt"
-    test_file = "Charge-discharge/Maccor/SIM-A7-1047-ET - 079.txt"
+    test_file = "Charge-discharge/Maccor/SIM-A7-1039 - 073.txt"
+    # test_file = "Charge-discharge/Maccor/SIM-A7-1047-ET - 079.txt"
     logging.debug("Starting test...")
     test_file_path = FIXTURE_DIR / test_file
     logging.debug(f"Test-file: {test_file_path}")
