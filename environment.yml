@@ -66,4 +66,4 @@ dependencies:
        - jupyter-core==4.7.1
        - pytest
        - black
-       - cellpy==0.4.2b3
+       - cellpy==0.4.2b19
