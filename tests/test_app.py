@@ -169,6 +169,46 @@ def test_upload_file_post_maccor_txt_with_model(instrument_sub, filename, client
     assert response.status_code == 200
 
 
+def test_upload_file_post_maccor_txt_with_model_WMG_SIMBA(client, tmp_path):
+    # test_file = "Charge-discharge/Maccor/1044-CT-MaccorExport.txt"
+    test_file = "Charge-discharge/Maccor/SIM-A7-1039 - 073.txt"
+    # test_file = "Charge-discharge/Maccor/SIM-A7-1047-ET - 079.txt"
+    logging.debug("Starting test...")
+    test_file_path = FIXTURE_DIR / test_file
+    logging.debug(f"Test-file: {test_file_path}")
+    tmp_gz_file = "maccor_test_file.txt.gz"
+    temp_gz_file_path = tmp_path / tmp_gz_file
+    assert test_file_path.is_file()
+
+    with open(test_file_path, "rb") as f_in:
+        with gzip.open(temp_gz_file_path, "wb") as f_out:
+            shutil.copyfileobj(f_in, f_out)
+
+    assert temp_gz_file_path.is_file()
+
+    tmp_file = FileStorage(
+        stream=open(temp_gz_file_path, "rb"),
+        filename=tmp_gz_file,
+    )
+
+    url = "/upload_file"
+    data = {
+        "test_type": "CHARGE-DISCHARGE",
+        "test_type_subcategory": "GALVANOSTATIC CYCLING",
+        "instrument": "S4000",  # Change this
+        "instrument_brand": "MACCOR",
+        "data_format_model": "WMG_SIMBA",  # Not used yet
+        "files": tmp_file,
+    }
+
+    response = client.post(url, data=data, content_type="multipart/form-data")
+    payload = response.get_json()
+
+    assert "experiment_data" in payload.keys()
+    assert "experiment_info" in payload.keys()
+    assert response.status_code == 200
+
+
 @pytest.mark.parametrize(
     "extension,test_type,test_type_sub,instrument,instrument_sub",
     [

@@ -183,7 +183,7 @@ def transform_data_cellpy(file_name, **kwargs):
                     # "discharge_energy",  # MISSING
                 ]
             ]
-            * 1000
+            * 1 # needs to be changed for Arbin 
         )
 
         df_sum = c.summary
@@ -223,7 +223,7 @@ def transform_data_cellpy(file_name, **kwargs):
             ]
         ]
         df_sum2[["charge_capacity", "discharge_capacity"]] = (
-            df_sum2[["charge_capacity", "discharge_capacity"]] * 1000
+            df_sum2[["charge_capacity", "discharge_capacity"]] * 1 # needs to be changed for arbin
         )
         out_summary = json.loads(
             df_sum2.to_json(orient="split")
