@@ -124,13 +124,22 @@ def test_upload_file_post_maccor_txt(client, tmp_path):
     # assert response.status_code == 200
 
 
-def test_upload_file_post_maccor_txt_with_model_UBHAM_SIMBA(client, tmp_path):
-    test_file = "Charge-discharge/Maccor/01_UBham_M50_Validation_0deg_01.txt"
+@pytest.mark.parametrize(
+    "instrument_sub, filename",
+    [
+        ("S4000", "Charge-discharge/Maccor/01_UBham_M50_Validation_0deg_01.txt"),
+        ("S4000", "Charge-discharge/Maccor/SIM-A7-1047-ET - 079.txt"),
+        # ("S4000-UBHAM", "Charge-discharge/Maccor/01_UBham_M50_Validation_0deg_01.txt"),
+        # ("S4000-KIT", "Charge-discharge/Maccor/KIT_charge-discharge_maccor.txt")
+        ("S4000-WMG", "Charge-discharge/Maccor/1039_Data from File.TXT")
+    ],
+)
+def test_upload_file_post_maccor_txt_with_model(instrument_sub, filename, client, tmp_path):
+    test_file = filename
     test_file_path = FIXTURE_DIR / test_file
     tmp_gz_file = "maccor_test_file.txt.gz"
     temp_gz_file_path = tmp_path / tmp_gz_file
     assert test_file_path.is_file()
-
     with open(test_file_path, "rb") as f_in:
         with gzip.open(temp_gz_file_path, "wb") as f_out:
             shutil.copyfileobj(f_in, f_out)
@@ -146,7 +155,7 @@ def test_upload_file_post_maccor_txt_with_model_UBHAM_SIMBA(client, tmp_path):
     data = {
         "test_type": "CHARGE-DISCHARGE",
         "test_type_subcategory": "GALVANOSTATIC CYCLING",
-        "instrument": "S4000",  # Change this
+        "instrument": instrument_sub,
         "instrument_brand": "MACCOR",
         "data_format_model": "UBHAM_SIMBA",  # Not used yet
         "files": tmp_file,

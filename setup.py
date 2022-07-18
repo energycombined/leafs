@@ -14,7 +14,7 @@ with open("HISTORY.md") as history_file:
 
 included_packages = find_packages(exclude=["build", "docs", "templates"])
 
-requirements = ["flask", "cellpy==0.4.2b2", "galvani", "werkzeug", "psycopg2"]
+requirements = ["flask", "cellpy==0.4.2b19", "galvani", "werkzeug", "psycopg2"]
 
 test_requirements = requirements + [
     "black",

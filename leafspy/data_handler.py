@@ -87,22 +87,42 @@ def transform_data_xrd(file_name, **kwargs):
 
 def _cellpy_instruments(instrument, test_type, extension):
     # Temporary hack to translate from leafspy constants to cellpy constants
-
     cellpy_instrument = None
     data_format_model = None
+
+    logging.debug("interpreting cellpy model")
+
+    # arbin
     if (instrument, test_type, extension) == (
         "ARBIN-BT-2000",
         "CHARGE-DISCHARGE-GALVANOSTATIC CYCLING",
         "RES",
     ):
         cellpy_instrument = "arbin_res"
-    elif (instrument, test_type, extension) == (
-        "MACCOR-S4000",
+        return cellpy_instrument, data_format_model
+
+    # txt-files (maccor, ...)
+    if (test_type, extension) == (
         "CHARGE-DISCHARGE-GALVANOSTATIC CYCLING",
         "TXT",
     ):
-        cellpy_instrument = "maccor_txt"
-        data_format_model = "WMG_SIMBA"
+
+        if instrument.startswith("MACCOR-S4000"):
+            cellpy_instrument = "maccor_txt"
+
+            if instrument == "MACCOR-S4000-WMG":
+                data_format_model = "S4000-WMG"
+            elif instrument == "MACCOR-S4000-UBHAM":
+                data_format_model = "S4000-UBHAM"
+            elif instrument == "MACCOR-S4000-KIT":
+                data_format_model = "S4000-KIT"
+            elif instrument == "MACCOR-S4000":
+                data_format_model = "WMG_SIMBA"
+
+            logging.debug(f"{cellpy_instrument=}")
+            logging.debug(f"{data_format_model=}")
+            return cellpy_instrument, data_format_model
+
     return cellpy_instrument, data_format_model
 
 
@@ -134,6 +154,11 @@ def transform_data_cellpy(file_name, **kwargs):
     cellpy_instrument, model = _cellpy_instruments(instrument, test_type, extension)
 
     try:
+        logging.debug("Running cellpy")
+        logging.debug(f"cellpy.get(filename= {file_name}, "
+                      f"instrument= {cellpy_instrument}, "
+                      f"model={model}, kwargs: {kwargs})")
+
         d = cellpy.get(
             filename=file_name, instrument=cellpy_instrument, model=model, **kwargs
         )

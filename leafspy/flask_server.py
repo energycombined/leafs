@@ -56,6 +56,7 @@ def allowed_test(extension, test_type, instrument):
     """Check if the file is appropriate type."""
 
     logging.debug(f"File info: {extension=}, {test_type=}, {instrument=}")
+    logging.debug(f"Accepted tests: {accepted_tests}")
 
     if extension not in accepted_files:
         return (
@@ -80,6 +81,7 @@ def allowed_test(extension, test_type, instrument):
     test_index = accepted_tests.index(test_type)
     instrument_index = accepted_instruments.index(instrument)
 
+    logging.debug(f"Combination: {file_index=}, {test_index=}, {instrument_index=}")
     if test_index in accepted_combinations[file_index].keys():
         if instrument_index in accepted_combinations[file_index][test_index]:
             return (
@@ -88,12 +90,14 @@ def allowed_test(extension, test_type, instrument):
                 accepted_combinations[file_index][test_index][instrument_index],
             )
         else:
+            logging.debug("Rejected - not acceptable combination! ")
             return (
                 False,
                 f"{instrument} {test_type} tests are not supported in {extension} files",
                 "",
             )
     else:
+        logging.debug("Rejected - file index not valid key in accepted combinations dict! ")
         return False, f"{test_type} test is not supported in {extension} files.", ""
 
 

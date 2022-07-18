@@ -17,6 +17,9 @@ accepted_instruments = [
     "BIOLOGIC-MPG2",
     "STOE-STADI P",
     "MACCOR-S4000",
+    "MACCOR-S4000-WMG",
+    "MACCOR-S4000-UBHAM",
+    "MACCOR-S4000-KIT",
 ]
 used_functions = ["galvani", "cellpy", "xrd_custom"]
 
@@ -24,11 +27,23 @@ used_functions = ["galvani", "cellpy", "xrd_custom"]
 # file -> test -> instrument --> used function
 
 accepted_combinations = {
-    0: {
+    0: {  # MPR
         0: {1: "galvani", 2: "galvani"},
     },
-    1: {
-        1: {0: "cellpy"},
+    1: {  # RES
+        1: {  # CHARGE-DISCHARGE-GALVANOSTATIC CYCLING
+            0: "cellpy"  # ARBIN-BT-2000
+        },
     },
-    2: {1: {4: "cellpy"}, 3: {3: "xrd_custom"}},
+    2: {  # TXT
+        1: {  # CHARGE-DISCHARGE-GALVANOSTATIC CYCLING
+            4: "cellpy",  # MACCOR-S4000
+            5: "cellpy",  # MACCOR-S4000-WMG
+            6: "cellpy",  # MACCOR-S4000-UBHAM
+            7: "cellpy",  # MACCOR-S4000-KIT
+        },
+        3: {  # XRD
+            3: "xrd_custom"
+        }
+    },
 }
