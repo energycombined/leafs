@@ -97,6 +97,10 @@ def allowed_test(extension, test_type, instrument):
                 "",
             )
     else:
+        # raise ValueError(
+        #     "Rejected - test index not valid key in accepted combinations dict! "
+        # )
+
         logging.debug(
             "Rejected - file index not valid key in accepted combinations dict! "
         )

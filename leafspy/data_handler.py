@@ -56,7 +56,7 @@ def transform_data_xrd(file_name, **kwargs):
     try:
         df = pd.read_csv(
             file_name,
-            sep="\s+",
+            sep=r"\s+",
             engine="python",
             header=0,
             index_col=False,
@@ -91,21 +91,39 @@ def _cellpy_instruments(instrument, test_type, extension):
     data_format_model = None
 
     logging.debug("interpreting cellpy model")
+    logging.debug(f"{instrument=}")
+    logging.debug(f"{test_type=}")
+    logging.debug(f"{extension=}")
 
     # arbin
     if (instrument, test_type, extension) == (
-        "ARBIN-BT-2000",
-        "CHARGE-DISCHARGE-GALVANOSTATIC CYCLING",
-        "RES",
+            "ARBIN-BT-2000",
+            "CHARGE-DISCHARGE-GALVANOSTATIC CYCLING",
+            "RES",
     ):
         cellpy_instrument = "arbin_res"
+        logging.debug(f"{cellpy_instrument=}")
+        logging.debug(f"{data_format_model=}")
+        return cellpy_instrument, data_format_model
+
+    # cellpy
+    if extension == "CELLPY":
+        cellpy_instrument = "cellpy"
+        return cellpy_instrument, data_format_model
+
+    # cellpy as instrument and instrument brand
+    # could be a good idea to update it to use cellpy version instead of cellpy as string for instrument brand
+    # i.e. CELLPY-1.0.0
+    if instrument == "CELLPY-CELLPY":
+        cellpy_instrument = "cellpy"
         return cellpy_instrument, data_format_model
 
     # txt-files (maccor, ...)
     if (test_type, extension) == (
-        "CHARGE-DISCHARGE-GALVANOSTATIC CYCLING",
-        "TXT",
+            "CHARGE-DISCHARGE-GALVANOSTATIC CYCLING",
+            "TXT",
     ):
+        logging.debug("txt-file and galvanostatic cycling")
         if instrument.startswith("MACCOR-S4000"):
             cellpy_instrument = "maccor_txt"
 
@@ -116,7 +134,7 @@ def _cellpy_instruments(instrument, test_type, extension):
             elif instrument == "MACCOR-S4000-KIT":
                 data_format_model = "S4000-KIT"
             elif instrument == "MACCOR-S4000":
-                data_format_model = "WMG_SIMBA"
+                data_format_model = "S4000-WMG"
 
             logging.debug(f"{cellpy_instrument=}")
             logging.debug(f"{data_format_model=}")
@@ -176,16 +194,16 @@ def transform_data_cellpy(file_name, **kwargs):
                 # "discharge_energy",  # MISSING
             ]
         ] = (
-            df_raw[
-                [
-                    "current",
-                    "charge_capacity",
-                    "discharge_capacity",
-                    # "charge_energy",  # MISSING
-                    # "discharge_energy",  # MISSING
+                df_raw[
+                    [
+                        "current",
+                        "charge_capacity",
+                        "discharge_capacity",
+                        # "charge_energy",  # MISSING
+                        # "discharge_energy",  # MISSING
+                    ]
                 ]
-            ]
-            * 1 # needs to be changed for Arbin 
+                * 1  # needs to be changed for Arbin
         )
 
         df_sum = data.summary
@@ -244,7 +262,7 @@ def transform_data_cellpy(file_name, **kwargs):
         ]]
 
         df_sum[["charge_capacity", "discharge_capacity"]] = (
-            df_sum[["charge_capacity", "discharge_capacity"]] * 1  # needs to be changed for arbin
+                df_sum[["charge_capacity", "discharge_capacity"]] * 1  # needs to be changed for arbin
         )
         out_summary = json.loads(
             df_sum.to_json(orient="split")
@@ -258,10 +276,20 @@ def transform_data_cellpy(file_name, **kwargs):
         # data from the .res file. The auxiliary table, if existing, will be as long as
         # the experiment_data file
 
+        try:
+            channel_index = data.channel_index
+        except AttributeError:
+            channel_index = 0
+
+        try:
+            schedule_file_name = data.schedule_file_name
+        except AttributeError:
+            schedule_file_name = "unknown"
+
         xx = {
             "experiment_info": {
-                "channel_number": data.channel_index,
-                "schedule_file_name": data.schedule_file_name,
+                "channel_number": channel_index,
+                "schedule_file_name": schedule_file_name,
             },
             "experiment_summary": out_summary,
             "auxiliary_table": {
