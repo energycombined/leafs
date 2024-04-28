@@ -114,6 +114,7 @@ def page_not_found(error):
 @app.route("/upload_file", methods=["GET", "POST"])
 def upload_file():
     """Route for posting files."""
+    logging.debug(f"Request method: {request.method}")
 
     if request.method != "POST":
         out = """

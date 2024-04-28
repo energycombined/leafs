@@ -10,7 +10,7 @@ import pytest
 from werkzeug.datastructures import FileStorage
 
 from leafspy import flask_server
-from leafspy.data_handler import _cellpy_instruments
+from leafspy.data_handler import _cellpy_instruments, transform_data_cellpy
 
 FIXTURE_DIR = Path(__file__).parents[1].resolve() / "test_data"
 
@@ -56,8 +56,32 @@ def test_upload_file_post_no_file(client):
     assert response.status_code == 200
 
 
+def test_post_arbin(tmp_path):
+    arbin_test_file = "post-arbin-cellpy.res"
+    temp_file_path = tmp_path / arbin_test_file
+    if temp_file_path.is_file():
+        temp_file_path.unlink()
+    shutil.copy2(FIXTURE_DIR / arbin_test_file, temp_file_path)
+    assert temp_file_path.is_file()
+    instrument = 'ARBIN-BT-2000'
+    test_type = 'CHARGE-DISCHARGE-GALVANOSTATIC CYCLING'
+    extension = 'RES'
+    model = None
+
+    success, data = transform_data_cellpy(
+        temp_file_path,
+        instrument=instrument.upper(),
+        test_type=test_type.upper(),
+        extension=extension.upper(),
+        data_format_model=model,
+    )
+
+    assert success
+    assert data is not None
+
+
 def test_upload_file_post_arbin(client, tmp_path):
-    arbin_test_file = "546_ES_Fe02CDvsNi_HalleMix_Repro.res"
+    arbin_test_file = "post-arbin-cellpy.res"
     arbin_file_path = FIXTURE_DIR / arbin_test_file
     temp_gz_file_path = tmp_path / "arbin_test_file.res.gz"
     assert arbin_file_path.is_file()
