@@ -31,9 +31,7 @@ accepted_combinations = {
         0: {1: "galvani", 2: "galvani"},
     },
     1: {  # RES
-        1: {  # CHARGE-DISCHARGE-GALVANOSTATIC CYCLING
-            0: "cellpy"  # ARBIN-BT-2000
-        },
+        1: {0: "cellpy"},  # CHARGE-DISCHARGE-GALVANOSTATIC CYCLING  # ARBIN-BT-2000
     },
     2: {  # TXT
         1: {  # CHARGE-DISCHARGE-GALVANOSTATIC CYCLING
@@ -42,8 +40,6 @@ accepted_combinations = {
             6: "cellpy",  # MACCOR-S4000-UBHAM
             7: "cellpy",  # MACCOR-S4000-KIT
         },
-        3: {  # XRD
-            3: "xrd_custom"
-        }
+        3: {3: "xrd_custom"},  # XRD
     },
 }

@@ -131,10 +131,12 @@ def test_upload_file_post_maccor_txt(client, tmp_path):
         ("S4000", "Charge-discharge/Maccor/SIM-A7-1047-ET - 079.txt"),
         # ("S4000-UBHAM", "Charge-discharge/Maccor/01_UBham_M50_Validation_0deg_01.txt"),
         # ("S4000-KIT", "Charge-discharge/Maccor/KIT_charge-discharge_maccor.txt")
-        ("S4000-WMG", "Charge-discharge/Maccor/1039_Data from File.TXT")
+        ("S4000-WMG", "Charge-discharge/Maccor/1039_Data from File.TXT"),
     ],
 )
-def test_upload_file_post_maccor_txt_with_model(instrument_sub, filename, client, tmp_path):
+def test_upload_file_post_maccor_txt_with_model(
+    instrument_sub, filename, client, tmp_path
+):
     test_file = filename
     test_file_path = FIXTURE_DIR / test_file
     tmp_gz_file = "maccor_test_file.txt.gz"

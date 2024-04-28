@@ -106,7 +106,6 @@ def _cellpy_instruments(instrument, test_type, extension):
         "CHARGE-DISCHARGE-GALVANOSTATIC CYCLING",
         "TXT",
     ):
-
         if instrument.startswith("MACCOR-S4000"):
             cellpy_instrument = "maccor_txt"
 
@@ -155,9 +154,11 @@ def transform_data_cellpy(file_name, **kwargs):
 
     try:
         logging.debug("Running cellpy")
-        logging.debug(f"cellpy.get(filename= {file_name}, "
-                      f"instrument= {cellpy_instrument}, "
-                      f"model={model}, kwargs: {kwargs})")
+        logging.debug(
+            f"cellpy.get(filename= {file_name}, "
+            f"instrument= {cellpy_instrument}, "
+            f"model={model}, kwargs: {kwargs})"
+        )
 
         d = cellpy.get(
             filename=file_name, instrument=cellpy_instrument, model=model, **kwargs

@@ -4,7 +4,7 @@ from setuptools import setup, find_packages
 
 name = "leafspy"
 description = "Data conversion for Leafs."
-version = "0.1.1"
+version = "0.2.0"
 
 with open("README.md") as readme_file:
     readme = readme_file.read()
@@ -14,7 +14,7 @@ with open("HISTORY.md") as history_file:
 
 included_packages = find_packages(exclude=["build", "docs", "templates"])
 
-requirements = ["flask", "cellpy==0.4.2b19", "galvani", "werkzeug", "psycopg2"]
+requirements = ["flask", "cellpy>=1.0.1", "galvani", "werkzeug", "psycopg2"]
 
 test_requirements = requirements + [
     "black",
@@ -44,6 +44,7 @@ setup(
         "Programming Language :: Python :: 3.8",
         "Programming Language :: Python :: 3.9",
         "Programming Language :: Python :: 3.10",
+        "Programming Language :: Python :: 3.11",
     ],
     test_suite="tests",
     tests_require=test_requirements,

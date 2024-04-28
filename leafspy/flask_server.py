@@ -97,7 +97,9 @@ def allowed_test(extension, test_type, instrument):
                 "",
             )
     else:
-        logging.debug("Rejected - file index not valid key in accepted combinations dict! ")
+        logging.debug(
+            "Rejected - file index not valid key in accepted combinations dict! "
+        )
         return False, f"{test_type} test is not supported in {extension} files.", ""
 
 
