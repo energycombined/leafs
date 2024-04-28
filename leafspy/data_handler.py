@@ -85,6 +85,15 @@ def transform_data_xrd(file_name, **kwargs):
         return False, err
 
 
+def _clean_up_non_unicode_file(file_name):
+    """Clean up non-unicode file."""
+    with open(file_name, "r", encoding="utf-8", errors="replace") as f:
+        lines = f.readlines()
+    with open(file_name, "w", encoding="utf-8") as f:
+        f.writelines(lines)
+    logging.debug(f"cleaned up non-unicode file: {file_name}")
+
+
 def _cellpy_instruments(instrument, test_type, extension):
     # Temporary hack to translate from leafspy constants to cellpy constants
     cellpy_instrument = None
@@ -170,6 +179,11 @@ def transform_data_cellpy(file_name, **kwargs):
     )
 
     cellpy_instrument, model = _cellpy_instruments(instrument, test_type, extension)
+    if model == "S4000-KIT":
+        logging.debug("Using S4000-KIT model")
+        logging.debug("Note (2024.04.28): these files seems to always contain non-unicode characters")
+        logging.debug("Performing a clean-up of the file")
+        _clean_up_non_unicode_file(file_name)
 
     try:
         logging.debug("Running cellpy")
