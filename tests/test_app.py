@@ -10,7 +10,7 @@ import pytest
 from werkzeug.datastructures import FileStorage
 
 from leafspy import flask_server
-from leafspy.data_handler import _cellpy_instruments
+from leafspy.data_handler import _cellpy_instruments, transform_data_cellpy
 
 FIXTURE_DIR = Path(__file__).parents[1].resolve() / "test_data"
 
@@ -56,8 +56,102 @@ def test_upload_file_post_no_file(client):
     assert response.status_code == 200
 
 
+def test_arbin(tmp_path):
+    arbin_test_file = "post-arbin-cellpy.res"
+    temp_file_path = tmp_path / arbin_test_file
+    if temp_file_path.is_file():
+        temp_file_path.unlink()
+    shutil.copy2(FIXTURE_DIR / arbin_test_file, temp_file_path)
+    assert temp_file_path.is_file()
+    instrument = 'ARBIN-BT-2000'
+    test_type = 'CHARGE-DISCHARGE-GALVANOSTATIC CYCLING'
+    extension = 'RES'
+    model = None
+
+    success, data = transform_data_cellpy(
+        temp_file_path,
+        instrument=instrument.upper(),
+        test_type=test_type.upper(),
+        extension=extension.upper(),
+        data_format_model=model,
+    )
+
+    assert success
+    assert data is not None
+
+
+def test_cellpy(tmp_path):
+    arbin_test_file = "post-cellpy.cellpy"
+    temp_file_path = tmp_path / arbin_test_file
+    if temp_file_path.is_file():
+        temp_file_path.unlink()
+    shutil.copy2(FIXTURE_DIR / arbin_test_file, temp_file_path)
+    assert temp_file_path.is_file()
+    instrument = 'CELLPY'
+    test_type = 'CHARGE-DISCHARGE-GALVANOSTATIC CYCLING'
+    extension = 'RES'
+    model = None
+
+    success, data = transform_data_cellpy(
+        temp_file_path,
+        instrument=instrument.upper(),
+        test_type=test_type.upper(),
+        extension=extension.upper(),
+        data_format_model=model,
+    )
+
+    assert success
+    assert data is not None
+
+
+def test_maccor_01(tmp_path):
+    test_file = "post-maccor-01.txt"
+    instrument = 'MACCOR-S4000-UBHAM'
+    test_type = 'CHARGE-DISCHARGE-GALVANOSTATIC CYCLING'
+    extension = 'TXT'
+
+    temp_file_path = tmp_path / test_file
+    if temp_file_path.is_file():
+        temp_file_path.unlink()
+    shutil.copy2(FIXTURE_DIR / test_file, temp_file_path)
+    assert temp_file_path.is_file()
+
+    success, data = transform_data_cellpy(
+        temp_file_path,
+        instrument=instrument.upper(),
+        test_type=test_type.upper(),
+        extension=extension.upper(),
+    )
+
+    assert success
+    assert data is not None
+
+
+def test_maccor_03(tmp_path):
+    test_file = "post-maccor-03.txt"
+    instrument = 'MACCOR-S4000-KIT'
+    test_type = 'CHARGE-DISCHARGE-GALVANOSTATIC CYCLING'
+    extension = 'TXT'
+
+    temp_file_path = tmp_path / test_file
+    if temp_file_path.is_file():
+        temp_file_path.unlink()
+    shutil.copy2(FIXTURE_DIR / test_file, temp_file_path)
+    assert temp_file_path.is_file()
+
+    success, data = transform_data_cellpy(
+        temp_file_path,
+        instrument=instrument.upper(),
+        test_type=test_type.upper(),
+        extension=extension.upper(),
+    )
+
+    assert success
+    assert data is not None
+
+
 def test_upload_file_post_arbin(client, tmp_path):
-    arbin_test_file = "546_ES_Fe02CDvsNi_HalleMix_Repro.res"
+    arbin_test_file = "post-arbin-cellpy.res"
     arbin_file_path = FIXTURE_DIR / arbin_test_file
     temp_gz_file_path = tmp_path / "arbin_test_file.res.gz"
     assert arbin_file_path.is_file()
@@ -90,8 +184,43 @@ def test_upload_file_post_arbin(client, tmp_path):
     assert response.status_code == 200
 
 
+def test_upload_file_post_cellpy(client, tmp_path):
+    test_file = "post-cellpy.cellpy"
+    file_path = FIXTURE_DIR / test_file
+    tmp_gz_file = "test_file.cellpy.gz"
+    temp_gz_file_path = tmp_path / tmp_gz_file
+    assert file_path.is_file()
+
+    with open(file_path, "rb") as f_in:
+        with gzip.open(temp_gz_file_path, "wb") as f_out:
+            shutil.copyfileobj(f_in, f_out)
+
+    assert temp_gz_file_path.is_file()
+
+    tmp_file = FileStorage(
+        stream=open(temp_gz_file_path, "rb"),
+        filename=tmp_gz_file,
+    )
+
+    url = "/upload_file"
+    data = {
+        "test_type": "CHARGE-DISCHARGE",
+        "test_type_subcategory": "GALVANOSTATIC CYCLING",
+        "instrument": "CELLPY",
+        "instrument_brand": "CELLPY",
+        "files": tmp_file,
+    }
+
+    response = client.post(url, data=data, content_type="multipart/form-data")
+    payload = response.get_json()
+
+    assert "experiment_data" in payload.keys()
+    assert "experiment_info" in payload.keys()
+    assert response.status_code == 200
+
+
 def test_upload_file_post_maccor_txt(client, tmp_path):
-    test_file = "Charge-discharge/Maccor/01_UBham_M50_Validation_0deg_01.txt"
+    test_file = "post-maccor-01.txt"
     test_file_path = FIXTURE_DIR / test_file
     tmp_gz_file = "maccor_test_file.txt.gz"
     temp_gz_file_path = tmp_path / tmp_gz_file
@@ -112,29 +241,30 @@ def test_upload_file_post_maccor_txt(client, tmp_path):
     data = {
         "test_type": "CHARGE-DISCHARGE",
         "test_type_subcategory": "GALVANOSTATIC CYCLING",
-        "instrument": "UBHAM",  # Change this
+        "instrument": "S4000-UBHAM",  # Change this
         "instrument_brand": "MACCOR",
         "files": tmp_file,
     }
 
     response = client.post(url, data=data, content_type="multipart/form-data")
     payload = response.get_json()
-    # assert "experiment_data" in payload.keys()
-    # assert "experiment_info" in payload.keys()
-    # assert response.status_code == 200
+    assert "experiment_data" in payload.keys()
+    assert "experiment_info" in payload.keys()
+    assert response.status_code == 200
 
 
 @pytest.mark.parametrize(
     "instrument_sub, filename",
     [
-        ("S4000", "Charge-discharge/Maccor/01_UBham_M50_Validation_0deg_01.txt"),
-        ("S4000", "Charge-discharge/Maccor/SIM-A7-1047-ET - 079.txt"),
-        # ("S4000-UBHAM", "Charge-discharge/Maccor/01_UBham_M50_Validation_0deg_01.txt"),
-        # ("S4000-KIT", "Charge-discharge/Maccor/KIT_charge-discharge_maccor.txt")
-        ("S4000-WMG", "Charge-discharge/Maccor/1039_Data from File.TXT")
+        ("S4000-UBHAM", "post-maccor-01.txt"),
+        ("S4000", "post-maccor-02.txt"),
+        ("S4000-WMG", "post-maccor-02.txt"),
+        ("S4000-KIT", "post-maccor-03.txt"),
     ],
 )
-def test_upload_file_post_maccor_txt_with_model(instrument_sub, filename, client, tmp_path):
+def test_upload_file_post_maccor_txt_with_model(
+    instrument_sub, filename, client, tmp_path
+):
     test_file = filename
     test_file_path = FIXTURE_DIR / test_file
     tmp_gz_file = "maccor_test_file.txt.gz"
@@ -157,47 +287,7 @@ def test_upload_file_post_maccor_txt_with_model(instrument_sub, filename, client
         "test_type_subcategory": "GALVANOSTATIC CYCLING",
         "instrument": instrument_sub,
         "instrument_brand": "MACCOR",
-        "data_format_model": "UBHAM_SIMBA",  # Not used yet
-        "files": tmp_file,
-    }
-
-    response = client.post(url, data=data, content_type="multipart/form-data")
-    payload = response.get_json()
-
-    assert "experiment_data" in payload.keys()
-    assert "experiment_info" in payload.keys()
-    assert response.status_code == 200
-
-
-def test_upload_file_post_maccor_txt_with_model_WMG_SIMBA(client, tmp_path):
-    # test_file = "Charge-discharge/Maccor/1044-CT-MaccorExport.txt"
-    test_file = "Charge-discharge/Maccor/SIM-A7-1039 - 073.txt"
-    # test_file = "Charge-discharge/Maccor/SIM-A7-1047-ET - 079.txt"
-    logging.debug("Starting test...")
-    test_file_path = FIXTURE_DIR / test_file
-    logging.debug(f"Test-file: {test_file_path}")
-    tmp_gz_file = "maccor_test_file.txt.gz"
-    temp_gz_file_path = tmp_path / tmp_gz_file
-    assert test_file_path.is_file()
-
-    with open(test_file_path, "rb") as f_in:
-        with gzip.open(temp_gz_file_path, "wb") as f_out:
-            shutil.copyfileobj(f_in, f_out)
-
-    assert temp_gz_file_path.is_file()
-
-    tmp_file = FileStorage(
-        stream=open(temp_gz_file_path, "rb"),
-        filename=tmp_gz_file,
-    )
-
-    url = "/upload_file"
-    data = {
-        "test_type": "CHARGE-DISCHARGE",
-        "test_type_subcategory": "GALVANOSTATIC CYCLING",
-        "instrument": "S4000",  # Change this
-        "instrument_brand": "MACCOR",
-        "data_format_model": "WMG_SIMBA",  # Not used yet
+        # "data_format_model": "UBHAM_SIMBA",  # Not used yet
         "files": tmp_file,
     }
 
@@ -242,7 +332,7 @@ def test_allowed_tests(extension, test_type, test_type_sub, instrument, instrume
             "CHARGE-DISCHARGE-GALVANOSTATIC CYCLING",
             "TXT",
             "maccor_txt",
-            "WMG_SIMBA",
+            "S4000-WMG",
         ),
     ],
 )

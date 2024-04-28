@@ -97,7 +97,13 @@ def allowed_test(extension, test_type, instrument):
                 "",
             )
     else:
-        logging.debug("Rejected - file index not valid key in accepted combinations dict! ")
+        # raise ValueError(
+        #     "Rejected - test index not valid key in accepted combinations dict! "
+        # )
+
+        logging.debug(
+            "Rejected - file index not valid key in accepted combinations dict! "
+        )
         return False, f"{test_type} test is not supported in {extension} files.", ""
 
 
@@ -112,6 +118,7 @@ def page_not_found(error):
 @app.route("/upload_file", methods=["GET", "POST"])
 def upload_file():
     """Route for posting files."""
+    logging.debug(f"Request method: {request.method}")
 
     if request.method != "POST":
         out = """

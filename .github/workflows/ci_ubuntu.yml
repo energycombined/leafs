@@ -18,20 +18,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Check out repository code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
 
       # Setup python
       - name: Setup Python
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v4
         with:
-          python-version: "3.8"
-          
-      # Cache dependencies to speed up the action
-      - name: Cache
-        uses: actions/cache@v2
-        with:
-          path: ~/.cache/pip
-          key: ${{ hashFiles('setup.py') }}
+          python-version: "3.11"
 
       # Install action dependencies
       - name: Install mdbtools

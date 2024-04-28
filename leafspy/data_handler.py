@@ -56,7 +56,7 @@ def transform_data_xrd(file_name, **kwargs):
     try:
         df = pd.read_csv(
             file_name,
-            sep="\s+",
+            sep=r"\s+",
             engine="python",
             header=0,
             index_col=False,
@@ -85,28 +85,54 @@ def transform_data_xrd(file_name, **kwargs):
         return False, err
 
 
+def _clean_up_non_unicode_file(file_name):
+    """Clean up non-unicode file."""
+    with open(file_name, "r", encoding="utf-8", errors="replace") as f:
+        lines = f.readlines()
+    with open(file_name, "w", encoding="utf-8") as f:
+        f.writelines(lines)
+    logging.debug(f"cleaned up non-unicode file: {file_name}")
+
+
 def _cellpy_instruments(instrument, test_type, extension):
     # Temporary hack to translate from leafspy constants to cellpy constants
     cellpy_instrument = None
     data_format_model = None
 
     logging.debug("interpreting cellpy model")
+    logging.debug(f"{instrument=}")
+    logging.debug(f"{test_type=}")
+    logging.debug(f"{extension=}")
 
     # arbin
     if (instrument, test_type, extension) == (
-        "ARBIN-BT-2000",
-        "CHARGE-DISCHARGE-GALVANOSTATIC CYCLING",
-        "RES",
+            "ARBIN-BT-2000",
+            "CHARGE-DISCHARGE-GALVANOSTATIC CYCLING",
+            "RES",
     ):
         cellpy_instrument = "arbin_res"
+        logging.debug(f"{cellpy_instrument=}")
+        logging.debug(f"{data_format_model=}")
+        return cellpy_instrument, data_format_model
+
+    # cellpy
+    if extension == "CELLPY":
+        cellpy_instrument = "cellpy"
+        return cellpy_instrument, data_format_model
+
+    # cellpy as instrument and instrument brand
+    # could be a good idea to update it to use cellpy version instead of cellpy as string for instrument brand
+    # i.e. CELLPY-1.0.0
+    if instrument == "CELLPY-CELLPY":
+        cellpy_instrument = "cellpy"
         return cellpy_instrument, data_format_model
 
     # txt-files (maccor, ...)
     if (test_type, extension) == (
-        "CHARGE-DISCHARGE-GALVANOSTATIC CYCLING",
-        "TXT",
+            "CHARGE-DISCHARGE-GALVANOSTATIC CYCLING",
+            "TXT",
     ):
-
+        logging.debug("txt-file and galvanostatic cycling")
         if instrument.startswith("MACCOR-S4000"):
             cellpy_instrument = "maccor_txt"
 
@@ -117,7 +143,7 @@ def _cellpy_instruments(instrument, test_type, extension):
             elif instrument == "MACCOR-S4000-KIT":
                 data_format_model = "S4000-KIT"
             elif instrument == "MACCOR-S4000":
-                data_format_model = "WMG_SIMBA"
+                data_format_model = "S4000-WMG"
 
             logging.debug(f"{cellpy_instrument=}")
             logging.debug(f"{data_format_model=}")
@@ -132,6 +158,7 @@ def transform_data_cellpy(file_name, **kwargs):
     test_type = kwargs.pop("test_type", None)
     extension = kwargs.pop("extension", None)
     model = kwargs.pop("data_format_model", None)
+    logging.debug("transform_data_cellpy")
 
     if model:
         logging.debug(
@@ -152,18 +179,25 @@ def transform_data_cellpy(file_name, **kwargs):
     )
 
     cellpy_instrument, model = _cellpy_instruments(instrument, test_type, extension)
+    if model == "S4000-KIT":
+        logging.debug("Using S4000-KIT model")
+        logging.debug("Note (2024.04.28): these files seems to always contain non-unicode characters")
+        logging.debug("Performing a clean-up of the file")
+        _clean_up_non_unicode_file(file_name)
 
     try:
         logging.debug("Running cellpy")
-        logging.debug(f"cellpy.get(filename= {file_name}, "
-                      f"instrument= {cellpy_instrument}, "
-                      f"model={model}, kwargs: {kwargs})")
+        logging.debug(
+            f"cellpy.get(filename= {file_name}, "
+            f"instrument= {cellpy_instrument}, "
+            f"model={model}, kwargs: {kwargs})"
+        )
 
-        d = cellpy.get(
+        c = cellpy.get(
             filename=file_name, instrument=cellpy_instrument, model=model, **kwargs
         )
-        c = d.cell
-        df_raw = c.raw
+        data = c.data
+        df_raw = data.raw
 
         df_raw[
             [
@@ -174,70 +208,102 @@ def transform_data_cellpy(file_name, **kwargs):
                 # "discharge_energy",  # MISSING
             ]
         ] = (
-            df_raw[
-                [
-                    "current",
-                    "charge_capacity",
-                    "discharge_capacity",
-                    # "charge_energy",  # MISSING
-                    # "discharge_energy",  # MISSING
+                df_raw[
+                    [
+                        "current",
+                        "charge_capacity",
+                        "discharge_capacity",
+                        # "charge_energy",  # MISSING
+                        # "discharge_energy",  # MISSING
+                    ]
                 ]
-            ]
-            * 1 # needs to be changed for Arbin 
+                * 1  # needs to be changed for Arbin
         )
 
-        df_sum = c.summary
+        df_sum = data.summary
         df_sum["cycle_index"] = df_sum.index
-        df_sum2 = df_sum[
-            [
-                "cycle_index",
-                "data_point",
-                "test_time",
-                "date_time",
-                "end_voltage_charge_u_V",
-                "end_voltage_discharge_u_V",
-                "charge_capacity",
-                "discharge_capacity",
-                "discharge_capacity_u_mAh_g",
-                "charge_capacity_u_mAh_g",
-                "cumulated_discharge_capacity_u_mAh_g",
-                "cumulated_charge_capacity_u_mAh_g",
-                "coulombic_efficiency_u_percentage",
-                "coulombic_difference_u_mAh_g",
-                "cumulated_coulombic_efficiency_u_percentage",
-                "cumulated_coulombic_difference_u_mAh_g",
-                "discharge_capacity_loss_u_mAh_g",
-                "cumulated_discharge_capacity_loss_u_mAh_g",
-                "charge_capacity_loss_u_mAh_g",
-                "cumulated_charge_capacity_loss_u_mAh_g",
-                "low_level_u_percentage",
-                "high_level_u_percentage",
-                "cumulated_ric_u_none",
-                "cumulated_ric_sei_u_none",
-                "cumulated_ric_disconnect_u_none",
-                "shifted_charge_capacity_u_mAh_g",
-                "shifted_discharge_capacity_u_mAh_g",
-                "normalized_cycle_index",
-                "charge_c_rate",
-                "discharge_c_rate",
-            ]
-        ]
-        df_sum2[["charge_capacity", "discharge_capacity"]] = (
-            df_sum2[["charge_capacity", "discharge_capacity"]] * 1 # needs to be changed for arbin
+        df_sum = df_sum[[
+            "cycle_index",
+            "data_point",
+            "test_time",
+            "date_time",
+            "end_voltage_charge",
+            "end_voltage_discharge",
+            "charge_capacity",
+            "discharge_capacity",
+            "coulombic_efficiency",
+            "cumulated_coulombic_efficiency",
+            "cumulated_charge_capacity",
+            "cumulated_discharge_capacity",
+            "discharge_capacity_loss",
+            "charge_capacity_loss",
+            "coulombic_difference",
+            "cumulated_coulombic_difference",
+            "cumulated_discharge_capacity_loss",
+            "cumulated_charge_capacity_loss",
+            "shifted_charge_capacity",
+            "shifted_discharge_capacity",
+            "cumulated_ric",
+            "cumulated_ric_sei",
+            "cumulated_ric_disconnect",
+            "normalized_cycle_index",
+            "charge_c_rate",
+            "discharge_c_rate",
+            "discharge_capacity_gravimetric",
+            "charge_capacity_gravimetric",
+            "cumulated_charge_capacity_gravimetric",
+            "cumulated_discharge_capacity_gravimetric",
+            "coulombic_difference_gravimetric",
+            "cumulated_coulombic_difference_gravimetric",
+            "discharge_capacity_loss_gravimetric",
+            "charge_capacity_loss_gravimetric",
+            "cumulated_discharge_capacity_loss_gravimetric",
+            "cumulated_charge_capacity_loss_gravimetric",
+            "shifted_charge_capacity_gravimetric",
+            "shifted_discharge_capacity_gravimetric",
+            "discharge_capacity_areal",
+            "charge_capacity_areal",
+            "cumulated_charge_capacity_areal",
+            "cumulated_discharge_capacity_areal",
+            "coulombic_difference_areal",
+            "cumulated_coulombic_difference_areal",
+            "discharge_capacity_loss_areal",
+            "charge_capacity_loss_areal",
+            "cumulated_discharge_capacity_loss_areal",
+            "cumulated_charge_capacity_loss_areal",
+            "shifted_charge_capacity_areal",
+            "shifted_discharge_capacity_areal",
+        ]]
+
+        df_sum[["charge_capacity", "discharge_capacity"]] = (
+                df_sum[["charge_capacity", "discharge_capacity"]] * 1  # needs to be changed for arbin
         )
         out_summary = json.loads(
-            df_sum2.to_json(orient="split")
+            df_sum.to_json(orient="split")
         )  # change  df_sum_small when you want to see the structure
         out_raw = json.loads(
             df_raw.to_json(orient="split")
         )  # change  df_raw_small when you want to see the structure
 
         # the json structure, four arrays in 1 json object.
-        # The experiment_info array might become bigger. We might want to read-out more data from the .res file. The auxiliary table, if existing, will be as long as the experiment_data file
+        # The experiment_info array might become bigger. We might want to read-out more
+        # data from the .res file. The auxiliary table, if existing, will be as long as
+        # the experiment_data file
+
+        try:
+            channel_index = data.channel_index
+        except AttributeError:
+            channel_index = 0
+
+        try:
+            schedule_file_name = data.schedule_file_name
+        except AttributeError:
+            schedule_file_name = "unknown"
+
         xx = {
             "experiment_info": {
-                "channel_number": c.channel_number,
-                "schedule_file_name": c.schedule_file_name,
+                "channel_number": channel_index,
+                "schedule_file_name": schedule_file_name,
             },
             "experiment_summary": out_summary,
             "auxiliary_table": {
