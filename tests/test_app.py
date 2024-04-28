@@ -127,6 +127,29 @@ def test_maccor_01(tmp_path):
     assert data is not None
 
 
+def test_maccor_03(tmp_path):
+    test_file = "post-maccor-03.txt"
+    instrument = 'MACCOR-S4000-KIT'
+    test_type = 'CHARGE-DISCHARGE-GALVANOSTATIC CYCLING'
+    extension = 'TXT'
+
+    temp_file_path = tmp_path / test_file
+    if temp_file_path.is_file():
+        temp_file_path.unlink()
+    shutil.copy2(FIXTURE_DIR / test_file, temp_file_path)
+    assert temp_file_path.is_file()
+
+    success, data = transform_data_cellpy(
+        temp_file_path,
+        instrument=instrument.upper(),
+        test_type=test_type.upper(),
+        extension=extension.upper(),
+    )
+
+    assert success
+    assert data is not None
+
+
 def test_upload_file_post_arbin(client, tmp_path):
     arbin_test_file = "post-arbin-cellpy.res"
     arbin_file_path = FIXTURE_DIR / arbin_test_file
