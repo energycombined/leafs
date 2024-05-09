@@ -4,7 +4,7 @@
 # TODO: since this module is responsible for tracking supported experiments, it makes sense that it also includes
 #  the method that does the check (move from flask_server.py).
 
-accepted_files = ["MPR", "RES", "TXT", "CELLPY"]
+accepted_files = ["MPR", "RES", "TXT", "H5"]
 accepted_tests = [
     "VOLTAMMETRY-CYCLIC VOLTAMMETRY (CV)",
     "CHARGE-DISCHARGE-GALVANOSTATIC CYCLING",
